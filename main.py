@@ -68,8 +68,9 @@ def check_win():
                 return False
             if grid[row][col] == 0 and solution[row][col] == 1:
                 return False
+            if grid[row][col] == -1 and solution[row][col] == 1:
+                return False
     return True
-
 
 def draw_grid():
     for i, clues in enumerate(row_clues):
@@ -80,18 +81,16 @@ def draw_grid():
     for i, clues in enumerate(col_clues):
         for j, clue in enumerate(clues):
             clue_surface = font.render(str(clue), True, BLACK)
-            screen.blit(clue_surface, (LEFT_MARGIN + i * SQUARE_SIZE + SQUARE_SIZE / 2 -10, 10 + j * 15))  # Espaciado vertical
+            screen.blit(clue_surface, (LEFT_MARGIN + i * SQUARE_SIZE + SQUARE_SIZE / 2 - 10, 10 + j * 15))
 
     for row in range(ROWS):
         for col in range(COLS):
-            rect = pygame.Rect(LEFT_MARGIN + col * SQUARE_SIZE, TOP_MARGIN + row * SQUARE_SIZE, SQUARE_SIZE,
-                               SQUARE_SIZE)
+            rect = pygame.Rect(LEFT_MARGIN + col * SQUARE_SIZE, TOP_MARGIN + row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE)
             if grid[row][col] == 1:
                 pygame.draw.rect(screen, GRAY, rect)
             elif grid[row][col] == -1:
                 pygame.draw.rect(screen, RED, rect)
             pygame.draw.rect(screen, BLACK, rect, 1)
-
 
 def handle_click(pos, button):
     x, y = pos
