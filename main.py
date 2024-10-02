@@ -6,8 +6,10 @@ pygame.init()
 
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
-BLUE = (0, 0, 255)
+GRAY = (128, 128, 128)
+BLUE = (90, 140, 255)
 GREEN = (0, 255, 0)
+RED = (255, 0, 0)
 
 ROWS = 5
 COLS = 5
@@ -85,9 +87,9 @@ def draw_grid():
             rect = pygame.Rect(LEFT_MARGIN + col * SQUARE_SIZE, TOP_MARGIN + row * SQUARE_SIZE, SQUARE_SIZE,
                                SQUARE_SIZE)
             if grid[row][col] == 1:
-                pygame.draw.rect(screen, BLACK, rect)
+                pygame.draw.rect(screen, GRAY, rect)
             elif grid[row][col] == -1:
-                pygame.draw.rect(screen, BLUE, rect)
+                pygame.draw.rect(screen, RED, rect)
             pygame.draw.rect(screen, BLACK, rect, 1)
 
 

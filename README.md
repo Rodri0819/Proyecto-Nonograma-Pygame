@@ -1,1 +1,1 @@
-# Proyecto-Nanograma-Pygame
+# Proyecto-Nonograma-Pygame
