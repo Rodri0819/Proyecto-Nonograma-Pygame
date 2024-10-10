@@ -72,8 +72,9 @@ class NonogramGame:
                     sys.exit()
                 if event.type == pygame.MOUSEBUTTONDOWN and not grid.win:
                     grid.handle_click(pygame.mouse.get_pos(), event.button)
-            grid.draw(row_clues, col_clues)
             if not grid.win and grid.check_win(solution):
                 grid.win = True
+            grid.draw(row_clues, col_clues)
+            if grid.win:
                 grid.display_win_message(self.WIDTH, self.HEIGHT)
             pygame.display.flip()
