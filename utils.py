@@ -32,8 +32,6 @@ def generate_clues(solution, rows, cols):
 
     return row_clues, col_clues
 
-
-
 def check_win(grid, solution, rows, cols):
     for row in range(rows):
         for col in range(cols):

@@ -61,9 +61,9 @@ class Grid:
                 else:
                     self.grid[row][col] = 0
 
-    def check_win(self, solution):
-        return utils.check_win(self.grid, solution, self.rows, self.cols)
-
     def display_win_message(self, width, height):
         win_message = WIN_FONT.render("¡Ganaste!", True, GREEN)
         self.screen.blit(win_message, (width // 2 - win_message.get_width() // 2, height // 2))
+
+    def get_grid(self):
+        return self.grid

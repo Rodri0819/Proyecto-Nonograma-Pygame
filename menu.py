@@ -1,16 +1,17 @@
 import sys
 from constants import *
 
-
 def show_menu(screen, width, height):
     while True:
         screen.fill(WHITE)
         title_surface = MENU_FONT.render("Seleccione una opción:", True, BLACK)
         option1_surface = FONT.render("1. Tablero aleatorio de tamaño aleatorio", True, BLACK)
         option2_surface = FONT.render("2. Elegir tamaño del tablero", True, BLACK)
-        screen.blit(title_surface, (width // 2 - title_surface.get_width() // 2, height // 2 - 100))
-        screen.blit(option1_surface, (width // 2 - option1_surface.get_width() // 2, height // 2 - 50))
-        screen.blit(option2_surface, (width // 2 - option2_surface.get_width() // 2, height // 2))
+        option3_surface = FONT.render("3. Cerrar nonograma", True, BLACK)
+        screen.blit(title_surface, (width - title_surface.get_width() // 2, height - 100))
+        screen.blit(option1_surface, (width - option1_surface.get_width() // 2, height - 50))
+        screen.blit(option2_surface, (width - option2_surface.get_width() // 2, height))
+        screen.blit(option3_surface, (width - option3_surface.get_width() // 2, height + 50))
         pygame.display.flip()
 
         for event in pygame.event.get():
@@ -22,6 +23,9 @@ def show_menu(screen, width, height):
                     return "random"
                 elif event.key == pygame.K_2:
                     return "choose_size"
+                elif event.key == pygame.K_3:
+                    pygame.quit()
+                    sys.exit()
 
 def get_board_size(screen, width, height):
     input_active = True

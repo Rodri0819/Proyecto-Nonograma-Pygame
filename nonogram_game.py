@@ -3,7 +3,7 @@ import sys
 import utils
 import menu
 from constants import *
-from grid import Grid
+from grid import *
 
 class NonogramGame:
     def __init__(self):
@@ -15,8 +15,6 @@ class NonogramGame:
         self.SQUARE_SIZE = SQUARE_SIZE
         self.TOP_MARGIN = TOP_MARGIN_BASE + 7 * self.ROWS
         self.LEFT_MARGIN = LEFT_MARGIN_BASE + 7 * self.COLS
-
-        # Establecer tamaño inicial de la ventana para el menú
         self.WIDTH = 800
         self.HEIGHT = 600
 
@@ -40,41 +38,49 @@ class NonogramGame:
         self.screen = pygame.display.set_mode((self.WIDTH, self.HEIGHT))
 
     def main_loop(self):
-        # Mostrar menú inicial
-        option = menu.show_menu(self.screen, self.WIDTH, self.HEIGHT)
+        while True:  # Bucle externo para reiniciar el juego
+            # Restablecer el tamaño de la pantalla al tamaño del menú
+            self.WIDTH = 800
+            self.HEIGHT = 600
+            self.screen = pygame.display.set_mode((self.WIDTH, self.HEIGHT))
 
-        if option == "random":
-            # Generar tablero aleatorio de tamaño aleatorio
-            rows = random.randint(5, 10)
-            cols = random.randint(5, 10)
-        elif option == "choose_size":
-            # Permitir al usuario ingresar el tamaño del tablero
-            rows, cols = menu.get_board_size(self.screen, self.WIDTH, self.HEIGHT)
-        else:
-            # Opción inválida, salir del juego
-            pygame.quit()
-            sys.exit()
+            # Mostrar menú inicial
+            option = menu.show_menu(self.screen, self.WIDTH // 2, self.HEIGHT // 2)
 
-        # Ajustar tamaño de la pantalla según el tamaño del tablero
-        self.adjust_screen_size(rows, cols)
+            if option == "random":
+                # Generar tablero aleatorio de tamaño aleatorio
+                rows = random.randint(5, 10)
+                cols = random.randint(5, 10)
+            elif option == "choose_size":
+                # Permitir al usuario ingresar el tamaño del tablero
+                rows, cols = menu.get_board_size(self.screen, self.WIDTH, self.HEIGHT)
+            else:
+                # Opción inválida, salir del juego
+                pygame.quit()
+                sys.exit()
 
-        # Generar solución y pistas
-        solution = self.generate_solution(rows, cols)
-        row_clues, col_clues = utils.generate_clues(solution, rows, cols)
+            # Ajustar tamaño de la pantalla según el tamaño del tablero
+            self.adjust_screen_size(rows, cols)
 
-        # Crear la cuadrícula del juego
-        grid = Grid(rows, cols, self.SQUARE_SIZE, self.TOP_MARGIN, self.LEFT_MARGIN, self.screen)
+            # Generar solución y pistas
+            solution = self.generate_solution(rows, cols)
+            row_clues, col_clues = utils.generate_clues(solution, rows, cols)
 
-        while True:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    sys.exit()
-                if event.type == pygame.MOUSEBUTTONDOWN and not grid.win:
-                    grid.handle_click(pygame.mouse.get_pos(), event.button)
-            if not grid.win and grid.check_win(solution):
-                grid.win = True
-            grid.draw(row_clues, col_clues)
-            if grid.win:
-                grid.display_win_message(self.WIDTH, self.HEIGHT)
-            pygame.display.flip()
+            # Crear la cuadrícula del juego
+            grid = Grid(rows, cols, self.SQUARE_SIZE, self.TOP_MARGIN, self.LEFT_MARGIN, self.screen)
+
+            running = True
+            while running:
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        pygame.quit()
+                        sys.exit()
+                    if event.type == pygame.MOUSEBUTTONDOWN and not grid.win:
+                        grid.handle_click(pygame.mouse.get_pos(), event.button)
+                grid.draw(row_clues, col_clues)
+                if not grid.win and utils.check_win(grid.get_grid(), solution, rows, cols):
+                    grid.display_win_message(self.WIDTH, self.HEIGHT)
+                    pygame.display.flip()
+                    pygame.time.delay(2000)  # Esperar 2 segundos
+                    running = False
+                pygame.display.flip()
