@@ -9,7 +9,7 @@ class NonogramGame:
     def __init__(self):
         pygame.init()
 
-        # Variables iniciales
+        #Variables iniciales
         self.ROWS = DEFAULT_ROWS
         self.COLS = DEFAULT_COLS
         self.SQUARE_SIZE = SQUARE_SIZE
@@ -38,35 +38,35 @@ class NonogramGame:
         self.screen = pygame.display.set_mode((self.WIDTH, self.HEIGHT))
 
     def main_loop(self):
-        while True:  # Bucle externo para reiniciar el juego
-            # Restablecer el tamaño de la pantalla al tamaño del menú
+        while True:  #Bucle externo para reiniciar el juego
+            #Restablecer el tamaño de la pantalla al tamaño del menú
             self.WIDTH = 800
             self.HEIGHT = 600
             self.screen = pygame.display.set_mode((self.WIDTH, self.HEIGHT))
 
-            # Mostrar menú inicial
+            #Mostrar menú inicial
             option = menu.show_menu(self.screen, self.WIDTH // 2, self.HEIGHT // 2)
 
             if option == "random":
-                # Generar tablero aleatorio de tamaño aleatorio
+                #Generar tablero aleatorio de tamaño aleatorio
                 rows = random.randint(5, 10)
                 cols = random.randint(5, 10)
             elif option == "choose_size":
-                # Permitir al usuario ingresar el tamaño del tablero
+                #Permitir al usuario ingresar el tamaño del tablero
                 rows, cols = menu.get_board_size(self.screen, self.WIDTH, self.HEIGHT)
             else:
-                # Opción inválida, salir del juego
+                #Opción inválida, salir del juego
                 pygame.quit()
                 sys.exit()
 
-            # Ajustar tamaño de la pantalla según el tamaño del tablero
+            #Ajustar tamaño de la pantalla según el tamaño del tablero
             self.adjust_screen_size(rows, cols)
 
-            # Generar solución y pistas
+            #Generar solución y pistas
             solution = self.generate_solution(rows, cols)
             row_clues, col_clues = utils.generate_clues(solution, rows, cols)
 
-            # Crear la cuadrícula del juego
+            #Crear la cuadrícula del juego
             grid = Grid(rows, cols, self.SQUARE_SIZE, self.TOP_MARGIN, self.LEFT_MARGIN, self.screen)
 
             running = True
@@ -81,6 +81,6 @@ class NonogramGame:
                 if not grid.win and utils.check_win(grid.get_grid(), solution, rows, cols):
                     grid.display_win_message(self.WIDTH, self.HEIGHT)
                     pygame.display.flip()
-                    pygame.time.delay(2000)  # Esperar 2 segundos
+                    pygame.time.delay(2000)
                     running = False
                 pygame.display.flip()
