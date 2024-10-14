@@ -1,7 +1,4 @@
 from constants import *
-import \
-    utils
-
 
 #Clase que representa la cuadrícula del Nonograma
 class Grid:

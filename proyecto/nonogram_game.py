@@ -2,7 +2,6 @@ import random
 import sys
 import utils
 import menu
-from constants import *
 from grid import *
 
 class NonogramGame:

@@ -1,7 +1,6 @@
 import sys  # Módulo para controlar la salida del sistema y el cierre del programa.
 from constants import *  # Importa las constantes (colores, fuentes, etc.) definidas en 'constants.py'.
 
-
 #Función que muestra el menú principal
 def show_menu(screen, width, height):
     #Bucle principal del menú
