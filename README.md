@@ -65,6 +65,16 @@ Puedes modificar las constantes en `constants.py` para cambiar aspectos visuales
 
 ---
 
+
+Fotos:
+
+![image](https://github.com/user-attachments/assets/5cd321c6-1d8e-45e4-b0be-3ba2ff937bc7)
+
+![image](https://github.com/user-attachments/assets/acf908b5-872d-4e60-84ee-6cc363ab4614)
+
+![image](https://github.com/user-attachments/assets/189683b6-90f0-4ce5-a850-cba8673ab113)
+
+
 ### Autores
 <p align="left">
 </p>
