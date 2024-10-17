@@ -91,4 +91,15 @@ Fotos:
 
   
 ### Lenguaje y herramientas
-<p align="left"> <a href="https://www.python.org" target="_blank" rel="noreferrer"> <img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/python/python-original.svg" alt="python" width="40" height="40"/> </a> </p>
+<p align="left"> 
+    <a href="https://www.python.org" target="_blank" rel="noreferrer">
+        <img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/python/python-original.svg" alt="python" width="70" height="70"/>
+    </a> 
+    <a href="https://www.pygame.org" target="_blank" rel="noreferrer">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/b/be/Pygame_logo.svg" alt="pygame" width="200" height="70"/>
+    </a>
+    <a href="https://www.pygame.org" target="_blank" rel="noreferrer">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/b/ba/Pytest_logo.svg" alt="pygame" width="100" height="70"/>
+    </a>
+</p>
+
