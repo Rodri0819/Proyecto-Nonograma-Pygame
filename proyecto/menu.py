@@ -12,13 +12,15 @@ def show_menu(screen, width, height):
         title_surface = MENU_FONT.render("Seleccione modo:", True, BLACK)
         option1_surface = FONT.render("1. Tablero de tamaño aleatorio", True, BLACK)
         option2_surface = FONT.render("2. Elegir tamaño del tablero", True, BLACK)
-        option3_surface = FONT.render("3. Cerrar nonograma", True, BLACK)
+        option3_surface = FONT.render("3. Cómo Jugar", True, BLACK)
+        option4_surface = FONT.render("4. Cerrar nonograma", True, BLACK)
 
         #Centra los textos
-        screen.blit(title_surface, (width - title_surface.get_width() // 2, height - 100))
+        screen.blit(title_surface, (width - title_surface.get_width() // 2, height - 125))
         screen.blit(option1_surface, (width - option1_surface.get_width() // 2, height - 50))
         screen.blit(option2_surface, (width - option2_surface.get_width() // 2, height))
         screen.blit(option3_surface, (width - option3_surface.get_width() // 2, height + 50))
+        screen.blit(option4_surface, (width - option4_surface.get_width() // 2, height + 100))
 
         #Actualiza la pantalla para que se muestre lo que se a renderizado
         pygame.display.flip()
@@ -33,9 +35,12 @@ def show_menu(screen, width, height):
                     return "random"  #Devuelve la opción de tablero aleatorio
                 elif event.key == pygame.K_2:  #Si se presiona '2'
                     return "choose_size"  #Devuelve la opción para elegir el tamaño del tablero
-                elif event.key == pygame.K_3:  # Si se presiona '3'
+                elif event.key == pygame.K_3:
+                    return "tutorial"
+                elif event.key == pygame.K_4:  # Si se presiona '3'
                     pygame.quit()  #Cierra Pygame
                     sys.exit()  #Sale del programa
+
 
 
 #Función que permite al jugador ingresar el tamaño del tablero

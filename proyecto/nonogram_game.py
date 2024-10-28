@@ -36,6 +36,53 @@ class NonogramGame:
         self.HEIGHT = 50 + self.TOP_MARGIN + rows * self.SQUARE_SIZE
         self.screen = pygame.display.set_mode((self.WIDTH, self.HEIGHT))
 
+    def run_tutorial(self):
+        instructions = [
+            "",
+            "",
+            "1. Las Reglas Básicas del Nonograma:",
+            "Debes llenar celdas en una cuadrícula basándote en los números que aparecen en los bordes.",
+            "Los números indican cuántas celdas consecutivas debes llenar en cada fila o columna.",
+            "",
+            "2. Cómo Interpretar Múltiples Números en una Fila o Columna:",
+            "Si hay N cantidad de números, significa que hay N grupos de celdas correctas",
+            "y al menos una celda vacía entre cada grupo.",
+            "",
+            "3. Cómo Empezar:",
+            "Comienza con filas o columnas donde los números",
+            "llenan completamente la cuadrícula o casi lo hacen.",
+            "",
+            "4. Marcar las Celdas Vacías:",
+            "Usa el Clic derecho para marcar celdas que no son correctas.",
+            "",
+            "5. Completa el Nonograma:",
+            "Sigue deduciendo hasta completar la imagen oculta.",
+            "¡Buena suerte!"
+        ]
+
+        # Limpiar pantalla y mostrar fondo blanco
+        self.screen.fill(WHITE)
+
+        # Mostrar cada línea de instrucciones centrada en pantalla
+        for i, line in enumerate(instructions):
+            instruction_surface = FONT.render(line, True, BLACK)
+            self.screen.blit(
+                instruction_surface,
+                (self.WIDTH // 2 - instruction_surface.get_width() // 2, 20 + i * 25)
+            )
+
+        pygame.display.flip()
+
+        # Esperar a que el jugador presione una tecla para salir de las instrucciones
+        waiting = True
+        while waiting:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                elif event.type == pygame.KEYDOWN:
+                    waiting = False  # Salir de las instrucciones al presionar cualquier tecla
+
     def main_loop(self):
         while True:  #Bucle externo para reiniciar el juego
             #Restablecer el tamaño de la pantalla al tamaño del menú
@@ -53,8 +100,11 @@ class NonogramGame:
             elif option == "choose_size":
                 #Permitir al usuario ingresar el tamaño del tablero
                 rows, cols = menu.get_board_size(self.screen, self.WIDTH, self.HEIGHT)
+            elif option == "tutorial":
+                self.run_tutorial()  # Llamada a la función de tutorial
+                continue  # Reinicia el menú al finalizar el tutorial
             else:
-                #Opción inválida, salir del juego
+                #Salir del juego
                 pygame.quit()
                 sys.exit()
 
