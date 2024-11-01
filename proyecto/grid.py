@@ -2,7 +2,7 @@ from constants import *
 
 #Clase que representa la cuadrícula del Nonograma
 class Grid:
-    def __init__(self, rows, cols, square_size, top_margin, left_margin, screen):
+    def __init__(self, rows, cols, square_size, top_margin, left_margin, screen, initial_grid=None):
         #Inicialización de atributos de la cuadrícula
         self.rows = rows  #Número de filas del tablero
         self.cols = cols  #Número de columnas del tablero
@@ -10,9 +10,16 @@ class Grid:
         self.top_margin = top_margin  #Margen superior donde comenzará el tablero
         self.left_margin = left_margin  #Margen izquierdo donde comenzará el tablero
         self.screen = screen  #Pantalla de Pygame donde se dibuja el tablero
-        #Inicializa la cuadrícula vacía
-        self.grid = [[0 for _ in range(cols)] for _ in range(rows)]
+        # Inicializa la cuadrícula vacía o usa el estado inicial pasado
+        if initial_grid is None:
+            self.grid = [[0 for _ in range(cols)] for _ in range(rows)]
+        else:
+            self.grid = initial_grid  # Cargar el estado de la cuadrícula
         self.win = False
+
+    def set_grid(self, grid_data):
+        """Establece el estado de la cuadrícula basado en los datos cargados."""
+        self.grid = grid_data
 
     def reset(self):
         # Reinicia el estado de la cuadrícula

@@ -5,6 +5,7 @@ import menu
 from grid import *
 import datetime 
 import os
+import pickle
 
 class NonogramGame:
     def __init__(self):
@@ -86,7 +87,7 @@ class NonogramGame:
                     waiting = False  # Salir de las instrucciones al presionar cualquier tecla
 
     def show_pause_menu(self,screen, width, height):
-        options = ["Resume", "Restart", "Exit"]
+        options = ["Resume", "Guardar partida", "Restart", "Exit"]
         selected_option = 0  # Opción inicialmente seleccionada
 
         while True:
@@ -113,6 +114,36 @@ class NonogramGame:
                         return selected_option
 
 
+    def save_game(self, grid, rows, cols, elapsed_time, save_filename=None):
+       
+        """Guarda el estado de la partida en un archivo usando pickle."""
+        # Crear la carpeta si no existe
+        directory = "partidas_guardadas"
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+
+        if save_filename is None:
+            now = datetime.datetime.now()
+            timestamp = now.strftime("%Y%m%d_%H%M%S")  # Formato: YYYYMMDD_HHMMSS
+            save_filename = f"{timestamp}.pkl"  # Nombre del archivo con la fecha y hora
+
+        filepath = os.path.join(directory, save_filename)  # Ruta completa del archivo
+
+        data = {
+            'grid': grid,  # El estado de la cuadrícula
+            'rows': rows,  # Número de filas
+            'cols': cols,  # Número de columnas
+            'elapsed_time': elapsed_time
+        }
+        with open(filepath, 'wb') as f:  # Modo binario
+            pickle.dump(data, f)
+    
+    def load_game(self, load_filename):
+        #Carga el estado de la partida desde un archivo usando pickle
+        with open(load_filename, 'rb') as f:  # Modo binario
+            data = pickle.load(f)
+        return data['grid'], data['rows'], data['cols'], data['elapsed_time']  # Devuelve la cuadrícula, sus dimensiones y tiempo transcurrido
+
     def main_loop(self):
         while True:  # Bucle externo para reiniciar el juego
             # Restablecer el tamaño de la pantalla al tamaño del menú
@@ -123,7 +154,17 @@ class NonogramGame:
             # Mostrar menú inicial
             option = menu.show_menu(self.screen, self.WIDTH // 2, self.HEIGHT // 2)
 
-            if option == "random":
+            if option == "cargar_partida":
+                #cargar partidas
+                selected_game = menu.show_saved_games(self.screen)  # Muestra la lista de partidas guardadas
+                if selected_game == "menu_principal":
+                    continue  # Regresar al menú principal
+                if selected_game:  # Si se seleccionó un archivo    
+                    game_filename = os.path.join("partidas_guardadas", selected_game)  # Construye la ruta del archivo
+                    grid_data, rows, cols, elapsed_time = self.load_game(game_filename)
+                    start_time = pygame.time.get_ticks() - elapsed_time * 1000  # Ajusta start_time con el tiempo cargado
+                    grid = Grid(rows, cols, self.SQUARE_SIZE, self.TOP_MARGIN, self.LEFT_MARGIN, self.screen, grid_data)  # Usar el estado guardado
+            elif option == "random":
                 rows = random.randint(5, 10)
                 cols = random.randint(5, 10)
             elif option == "choose_size":
@@ -142,11 +183,12 @@ class NonogramGame:
             solution = self.generate_solution(rows, cols)
             row_clues, col_clues = utils.generate_clues(solution, rows, cols)
 
-            # Crear la cuadrícula del juego
-            grid = Grid(rows, cols, self.SQUARE_SIZE, self.TOP_MARGIN, self.LEFT_MARGIN, self.screen)
-
-            # Iniciar el cronómetro
-            start_time = pygame.time.get_ticks()  # Tiempo en milisegundos
+            # Si se carga un juego, no reiniciar el tiempo
+            if option != "cargar_partida":
+                start_time = pygame.time.get_ticks()
+                grid = Grid(rows, cols, self.SQUARE_SIZE, self.TOP_MARGIN, self.LEFT_MARGIN, self.screen)  # Cuadrícula vacía para nuevo juego
+                 
+                
             running = True
             while running:
                 for event in pygame.event.get():
@@ -156,12 +198,14 @@ class NonogramGame:
                     if event.type == pygame.KEYDOWN:
                         if event.key == pygame.K_RETURN:  # Presiona Enter para pausar
                             selected_option = self.show_pause_menu(self.screen, self.WIDTH, self.HEIGHT)
-
                             if selected_option == 0:  # Resume
                                 continue  # Vuelve al juego
-                            elif selected_option == 1:  # Restart
+                            elif selected_option == 1: # Save game
+                                ##Funcion para guardar partida 
+                                self.save_game(grid.get_grid(), rows, cols, elapsed_time)
+                            elif selected_option == 2:  # Restart
                                grid.reset()  # Reinicia la cuadrícula
-                            elif selected_option == 2:  # Exit
+                            elif selected_option == 3:  # Exit
                                running = False  # Sal de este bucle para reiniciar el juego
                                break  # Sal del bucle mientras el juego
                     
@@ -192,7 +236,7 @@ class NonogramGame:
                     # Generar el nombre de archivo con la fecha y hora actual
                     now = datetime.datetime.now()
                     timestamp = now.strftime("%Y%m%d_%H%M%S")  # Formato: YYYYMMDD_HHMMSS
-                    filename = f"nonograma_ganado_{timestamp}.png"  # Nombre del archivo
+                    screenshot_filename = f"nonograma_ganado_{timestamp}.png"  # Nombre del archivo
 
                     # Crear la carpeta "partidas-ganadas" si no existe
                     directory = "partidas-ganadas"
@@ -200,7 +244,7 @@ class NonogramGame:
                         os.makedirs(directory)  # Crear la carpeta
 
                     # Guardar la imagen del Nonograma
-                    filepath = os.path.join(directory, filename)  # Ruta completa del archivo
+                    filepath = os.path.join(directory, screenshot_filename)  # Ruta completa del archivo
                     screenshot_surface = pygame.Surface((self.WIDTH, self.HEIGHT))
                     screenshot_surface.blit(self.screen, (0, 0))  # Copia la pantalla actual
                     pygame.image.save(screenshot_surface, filepath)  # Guarda la imagen
