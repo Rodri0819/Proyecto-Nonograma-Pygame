@@ -14,6 +14,11 @@ class Grid:
         self.grid = [[0 for _ in range(cols)] for _ in range(rows)]
         self.win = False
 
+    def reset(self):
+        # Reinicia el estado de la cuadrícula
+        self.grid = [[0 for _ in range(self.cols)] for _ in range(self.rows)]
+        self.win = False
+
     #Método para dibujar la cuadrícula y las pistas en la pantalla
     def draw(self, row_clues, col_clues):
         #Rellena toda la pantalla con el color blanco
