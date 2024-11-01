@@ -3,6 +3,8 @@ import sys
 import utils
 import menu
 from grid import *
+import datetime 
+import os
 
 class NonogramGame:
     def __init__(self):
@@ -186,6 +188,25 @@ class NonogramGame:
 
                 # Comprobar si el jugador ha ganado
                 if not grid.win and utils.check_win(grid.get_grid(), solution, rows, cols):
+                    
+                    # Generar el nombre de archivo con la fecha y hora actual
+                    now = datetime.datetime.now()
+                    timestamp = now.strftime("%Y%m%d_%H%M%S")  # Formato: YYYYMMDD_HHMMSS
+                    filename = f"nonograma_ganado_{timestamp}.png"  # Nombre del archivo
+
+                    # Crear la carpeta "partidas-ganadas" si no existe
+                    directory = "partidas-ganadas"
+                    if not os.path.exists(directory):
+                        os.makedirs(directory)  # Crear la carpeta
+
+                    # Guardar la imagen del Nonograma
+                    filepath = os.path.join(directory, filename)  # Ruta completa del archivo
+                    screenshot_surface = pygame.Surface((self.WIDTH, self.HEIGHT))
+                    screenshot_surface.blit(self.screen, (0, 0))  # Copia la pantalla actual
+                    pygame.image.save(screenshot_surface, filepath)  # Guarda la imagen
+
+                    
+                    
                     grid.display_win_message(self.WIDTH, self.HEIGHT)
                     pygame.display.flip()
                     pygame.time.delay(2000)
