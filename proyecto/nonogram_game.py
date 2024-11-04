@@ -204,6 +204,7 @@ class NonogramGame:
                                 ##Funcion para guardar partida 
                                 self.save_game(grid.get_grid(), rows, cols, elapsed_time)
                             elif selected_option == 2:  # Restart
+                               start_time = pygame.time.get_ticks()
                                grid.reset()  # Reinicia la cuadrícula
                             elif selected_option == 3:  # Exit
                                running = False  # Sal de este bucle para reiniciar el juego
