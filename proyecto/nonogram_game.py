@@ -209,6 +209,8 @@ class NonogramGame:
                             elif selected_option == 3:  # Exit
                                running = False  # Sal de este bucle para reiniciar el juego
                                break  # Sal del bucle mientras el juego
+                        elif event.key == pygame.K_h:  # Presiona 'H' para obtener ayuda
+                            utils.mostrar_ayuda(grid.get_grid(), solution)
                     
                     if not grid.win:
                         if event.type == pygame.MOUSEBUTTONDOWN:
@@ -249,8 +251,6 @@ class NonogramGame:
                     screenshot_surface = pygame.Surface((self.WIDTH, self.HEIGHT))
                     screenshot_surface.blit(self.screen, (0, 0))  # Copia la pantalla actual
                     pygame.image.save(screenshot_surface, filepath)  # Guarda la imagen
-
-                    
                     
                     grid.display_win_message(self.WIDTH, self.HEIGHT)
                     pygame.display.flip()

@@ -1,3 +1,5 @@
+import random
+
 def generate_clues(solution, rows, cols):
     row_clues = []
     col_clues = []
@@ -31,6 +33,22 @@ def generate_clues(solution, rows, cols):
 
     return row_clues, col_clues  #Devuelve las pistas de filas y columnas
 
+def mostrar_ayuda(grid, solucion):
+        # Obtén todas las celdas que están incorrectas en el grid del usuario
+        celdas_incorrectas = [
+            (i, j) for i in range(len(grid))
+            for j in range(len(grid[i]))
+            if grid[i][j] != solucion[i][j]
+        ]
+
+        if celdas_incorrectas:
+            # Selecciona una celda incorrecta aleatoria para mostrar
+            i, j = random.choice(celdas_incorrectas)
+            grid[i][j] = solucion[i][j]  # Revela la celda correcta en la cuadrícula del usuario
+
+            return i, j  # Devuelve la posición de la celda para actualizar la interfaz
+        else:
+            return None  # Todas las celdas ya están correctas
 
 #Función para verificar si el jugador ha completado correctamente el Nonograma
 def check_win(grid, solution, rows, cols):
