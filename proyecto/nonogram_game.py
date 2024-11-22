@@ -113,47 +113,20 @@ class NonogramGame:
                     elif event.key == pygame.K_RETURN:  # Seleccionar opción
                         return selected_option
 
-    def create_nonogram(self):
-        # Ajustar tamaño de la pantalla para el editor
-        self.adjust_screen_size(self.ROWS, self.COLS)
-        grid = Grid(self.ROWS, self.COLS, self.SQUARE_SIZE, self.TOP_MARGIN, self.LEFT_MARGIN, self.screen)
-
-        editing = True
-        while editing:
-            self.screen.fill(WHITE)
-            grid.draw([], [])  # Dibuja el tablero sin pistas (las pistas se generarán después)
-
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    sys.exit()
-                if event.type == pygame.MOUSEBUTTONDOWN:
-                    grid.handle_click(pygame.mouse.get_pos(), event.button)  # Permite "dibujar" en el tablero
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_RETURN:  # Finalizar diseño
-                        # Generar pistas y guardar el diseño
-                        solution = grid.get_grid()
-                        row_clues, col_clues = utils.generate_clues(solution, self.ROWS, self.COLS)
-                        self.save_custom_nonogram(solution, row_clues, col_clues)
-                        editing = False  # Salir del editor
-                    elif event.key == pygame.K_ESCAPE:  # Cancelar diseño
-                        editing = False
-
-            pygame.display.flip()
-
-    def save_custom_nonogram(self, solution, row_clues, col_clues):
+    def save_custom_nonogram(self, grid, rows, cols):
         directory = "nonogramas_creados"
         if not os.path.exists(directory):
             os.makedirs(directory)
 
         now = datetime.datetime.now()
         timestamp = now.strftime("%Y%m%d_%H%M%S")
-        filename = os.path.join(directory, f"nonograma_{timestamp}.pkl")
+        filename = os.path.join(directory, f"{timestamp}.pkl")
 
         data = {
-            'solution': solution,
-            'row_clues': row_clues,
-            'col_clues': col_clues
+            'grid': grid,
+            'rows': rows,
+            'cols': cols,
+            'elapsed_time': 0
         }
         with open(filename, 'wb') as f:
             pickle.dump(data, f)
@@ -190,61 +163,6 @@ class NonogramGame:
             data = pickle.load(f)
         return data['grid'], data['rows'], data['cols'], data['elapsed_time']  # Devuelve la cuadrícula, sus dimensiones y tiempo transcurrido
 
-    def play_custom_nonogram(self):
-        # Directorio donde se guardan los nonogramas creados
-        directory = "nonogramas_creados"
-        files = [f for f in os.listdir(directory) if f.endswith('.pkl')]
-
-        if not files:
-            print("No hay nonogramas creados.")
-            return
-
-        # Mostrar lista para seleccionar el nonograma
-        selected_file = self.select_custom_nonogram(files)
-        if not selected_file:
-            print("Selección cancelada.")
-            return  # Salir si no se selecciona nada
-
-        filepath = os.path.join(directory, selected_file)
-
-        # Cargar el archivo seleccionado
-        with open(filepath, 'rb') as f:
-            data = pickle.load(f)
-
-        solution = data['solution']
-        row_clues = data['row_clues']
-        col_clues = data['col_clues']
-
-        # Ajustar el tamaño de la pantalla y jugar
-        self.ROWS = len(solution)
-        self.COLS = len(solution[0])
-        self.adjust_screen_size(self.ROWS, self.COLS)
-
-        grid = Grid(self.ROWS, self.COLS, self.SQUARE_SIZE, self.TOP_MARGIN, self.LEFT_MARGIN, self.screen)
-        grid.reset()  # Inicia con una cuadrícula vacía
-
-        # Ciclo principal para jugar el nonograma seleccionado
-        running = True
-        while running:
-            self.screen.fill(WHITE)
-            grid.draw(row_clues, col_clues)
-
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    sys.exit()
-                if event.type == pygame.MOUSEBUTTONDOWN:
-                    grid.handle_click(pygame.mouse.get_pos(), event.button)
-
-            # Verificar si el jugador ha completado el nonograma
-            if utils.check_win(grid.get_grid(), solution, self.ROWS, self.COLS):
-                grid.display_win_message(self.WIDTH, self.HEIGHT)
-                pygame.display.flip()
-                pygame.time.delay(2000)
-                running = False
-
-            pygame.display.flip()
-
     def main_loop(self):
         while True:  # Bucle externo para reiniciar el juego
             # Restablecer el tamaño de la pantalla al tamaño del menú
@@ -277,8 +195,16 @@ class NonogramGame:
                 self.create_nonogram()  # Llama al editor para crear un nonograma
                 continue  # Regresa al menú principal después de guardar el nonograma
             elif option == "play_custom":
-                self.play_custom_nonogram()  # Juega un nonograma personalizado
-                continue  # Regresa al menú principal después de jugar
+                # Mostrar partidas creadas
+                selected_game = menu.show_created_games(self.screen)
+                if selected_game == "menu_principal":
+                    continue  # Regresar al menú principal
+                if selected_game:  # Si se seleccionó un archivo
+                    created_game_filename = os.path.join("nonogramas_creados", selected_game)
+                    solution, rows, cols, elapsed_time = self.load_game(created_game_filename)
+                    start_time = pygame.time.get_ticks() - elapsed_time * 1000
+                    grid = Grid(rows, cols, self.SQUARE_SIZE, self.TOP_MARGIN, self.LEFT_MARGIN, self.screen, solution)
+                    row_clues, col_clues = utils.generate_clues(solution, rows, cols)
             else:
                 pygame.quit()
                 sys.exit()
@@ -286,9 +212,10 @@ class NonogramGame:
             # Ajustar tamaño de la pantalla según el tamaño del tablero
             self.adjust_screen_size(rows, cols)
 
-            # Generar solución y pistas
-            solution = self.generate_solution(rows, cols)
-            row_clues, col_clues = utils.generate_clues(solution, rows, cols)
+            if option == "choose_size" or option == "random":
+                # Generar solución y pistas
+                solution = self.generate_solution(rows, cols)
+                row_clues, col_clues = utils.generate_clues(solution, rows, cols)
 
             # Si se carga un juego, no reiniciar el tiempo
             if option != "cargar_partida":
@@ -354,98 +281,7 @@ class NonogramGame:
 
                 pygame.display.flip()
 
-    def select_custom_nonogram(self, files):
-        # Método para seleccionar un archivo de nonogramas personalizados
-        selected_index = 0
 
-        while True:
-            self.screen.fill(WHITE)
-
-            # Título
-            title_surface = FONT.render("Selecciona un Nonograma:", True, BLACK)
-            self.screen.blit(title_surface, (self.WIDTH // 2 - title_surface.get_width() // 2, 20))
-
-            # Mostrar archivos disponibles
-            for i, file in enumerate(files):
-                color = BLACK if i == selected_index else GRAY
-                file_surface = FONT.render(f"{i + 1}. {file}", True, color)
-                self.screen.blit(file_surface, (self.WIDTH // 2 - file_surface.get_width() // 2, 80 + i * 30))
-
-            # Instrucciones
-            instructions_surface = FONT.render("Usa UP/DOWN para mover, ENTER para seleccionar", True, BLACK)
-            self.screen.blit(instructions_surface,
-                             (self.WIDTH // 2 - instructions_surface.get_width() // 2, self.HEIGHT - 50))
-
-            pygame.display.flip()
-
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    sys.exit()
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_UP:
-                        selected_index = (selected_index - 1) % len(files)
-                    elif event.key == pygame.K_DOWN:
-                        selected_index = (selected_index + 1) % len(files)
-                    elif event.key == pygame.K_RETURN:
-                        return files[selected_index]
-                    elif event.key == pygame.K_ESCAPE:
-                        return None
-
-    def play_custom_nonogram(self):
-        # Método para jugar un nonograma personalizado
-        directory = "nonogramas_creados"
-        files = [f for f in os.listdir(directory) if f.endswith('.pkl')]
-
-        if not files:
-            print("No hay nonogramas creados.")
-            return
-
-        # Selección del nonograma personalizado
-        selected_file = self.select_custom_nonogram(files)
-        if not selected_file:
-            print("Selección cancelada.")
-            return
-
-        filepath = os.path.join(directory, selected_file)
-
-        # Cargar el archivo seleccionado
-        with open(filepath, 'rb') as f:
-            data = pickle.load(f)
-
-        solution = data['solution']
-        row_clues = data['row_clues']
-        col_clues = data['col_clues']
-
-        # Ajustar la pantalla al tamaño del nonograma
-        self.ROWS = len(solution)
-        self.COLS = len(solution[0])
-        self.adjust_screen_size(self.ROWS, self.COLS)
-
-        grid = Grid(self.ROWS, self.COLS, self.SQUARE_SIZE, self.TOP_MARGIN, self.LEFT_MARGIN, self.screen)
-        grid.reset()  # Iniciar cuadrícula vacía
-
-        # Ciclo principal del juego
-        running = True
-        while running:
-            self.screen.fill(WHITE)
-            grid.draw(row_clues, col_clues)
-
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    sys.exit()
-                if event.type == pygame.MOUSEBUTTONDOWN:
-                    grid.handle_click(pygame.mouse.get_pos(), event.button)
-
-            # Verificar si el jugador completó el nonograma
-            if utils.check_win(grid.get_grid(), solution, self.ROWS, self.COLS):
-                grid.display_win_message(self.WIDTH, self.HEIGHT)
-                pygame.display.flip()
-                pygame.time.delay(2000)
-                running = False
-
-            pygame.display.flip()
     def ask_board_size(self):
         """Permite al usuario ingresar el tamaño del tablero en formato NxM."""
         running = True
@@ -487,7 +323,6 @@ class NonogramGame:
 
         return 5, 5  # Valor por defecto si se cancela
 
-
     def create_nonogram(self):
         """Crea un nonograma personalizado permitiendo elegir el tamaño del tablero."""
         # Pedir al usuario el tamaño del tablero
@@ -511,7 +346,7 @@ class NonogramGame:
                     if event.key == pygame.K_RETURN:  # Finalizar diseño
                         solution = grid.get_grid()
                         row_clues, col_clues = utils.generate_clues(solution, self.ROWS, self.COLS)
-                        self.save_custom_nonogram(solution, row_clues, col_clues)
+                        self.save_custom_nonogram(solution, self.ROWS, self.COLS)
                         editing = False  # Salir del editor
                     elif event.key == pygame.K_ESCAPE:  # Cancelar diseño
                         editing = False

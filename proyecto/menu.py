@@ -17,7 +17,7 @@ def show_menu(screen, width, height):
         option3_surface = FONT.render("3. Elegir tamaño del tablero", True, BLACK)
         option4_surface = FONT.render("4. Jugar Nonograma Personalizado", True, BLACK)
         option5_surface = FONT.render("5. Crear Nonograma", True, BLACK)
-        option6_surface = FONT.render("6. Cómo Jugar", True, BLACK)
+        option6_surface = FONT.render("6. ¿Cómo Jugar?", True, BLACK)
         option7_surface = FONT.render("7. Cerrar nonograma", True, BLACK)
 
         # Ajusta las posiciones con más espacio entre las líneas
@@ -146,3 +146,53 @@ def show_saved_games(screen):
                     index = event.key - pygame.K_1  # Obtener el índice basado en la tecla presionada
                     if 0 <= index < len(saved_games[:5]):
                         return saved_games[index]  # Devuelve el nombre del archivo seleccionado
+
+def get_created_games():
+    # Devuelve una lista de los archivos de partidas guardadas.
+    directory = "nonogramas_creados"
+    if not os.path.exists(directory):
+        return []  # Devuelve una lista vacía si no existe la carpeta
+
+    return [f for f in os.listdir(directory) if f.endswith('.pkl')]  # Filtra solo archivos .pkl
+
+def show_created_games(screen):
+    created_games = get_created_games()
+
+    # Ordenar las partidas creadas del más reciente al más antiguo
+    created_games.sort(key=lambda x: datetime.datetime.strptime(x, "%Y%m%d_%H%M%S.pkl"), reverse=True)
+
+    while True:
+        screen.fill(WHITE)  # Rellena la pantalla con blanco
+
+        # Renderiza el título
+        title_surface = FONT.render("Nonogramas Creados:", True, BLACK)
+        screen.blit(title_surface, (screen.get_width() // 2 - title_surface.get_width() // 2, 20))
+
+        # Mensaje instruccional
+        instruction_surface = FONT.render("Presiona un número (1-5) para cargar una partida", True, BLACK)
+        screen.blit(instruction_surface, (screen.get_width() // 2 - instruction_surface.get_width() // 2, 50))
+
+        # Renderiza la lista de partidas guardadas, limitando a 5
+        if created_games:
+            for i, game in enumerate(created_games[:5]):  # Limitar a las primeras 5 partidas
+                game_surface = FONT.render(f"{i + 1}. {game}", True, BLACK)  # Mostrar el índice (1, 2, 3...)
+                screen.blit(game_surface, (screen.get_width() // 2 - game_surface.get_width() // 2, 100 + i * 30))
+        else:
+            empty_surface = FONT.render("No hay nonogramas creados", True, BLACK)
+            screen.blit(empty_surface, (screen.get_width() // 2 - empty_surface.get_width() // 2, 100))
+
+        pygame.display.flip()  # Actualiza la pantalla
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:  # Regresar con Escape
+                    return "menu_principal"  # Indica que debe regresar al menú principal
+
+                # Verificar si se presionó un número del 1 al 5
+                if pygame.K_1 <= event.key <= pygame.K_5:
+                    index = event.key - pygame.K_1  # Obtener el índice basado en la tecla presionada
+                    if 0 <= index < len(created_games[:5]):
+                        return created_games[index]  # Devuelve el nombre del archivo seleccionado
