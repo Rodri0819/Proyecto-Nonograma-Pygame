@@ -58,11 +58,17 @@ class Grid:
                     self.square_size,
                     self.square_size
                 )
+                #Esquinas de la celda
+                top_left = (self.left_margin + col * self.square_size + 7, self.top_margin + row * self.square_size + 7)
+                bottom_left = (self.left_margin + col * self.square_size + 7, self.top_margin + row * self.square_size + self.square_size - 7)
+                top_right = (self.left_margin + col * self.square_size + self.square_size - 7, self.top_margin + row * self.square_size + 7)
+                bottom_right = (self.left_margin + col * self.square_size + self.square_size - 7, self.top_margin + row * self.square_size + self.square_size - 7)
                 #Dibujar celdas basadas en el estado de cada celda en la cuadrícula
                 if self.grid[row][col] == 1:  #Si la celda está marcada por el jugador
                     pygame.draw.rect(self.screen, GRAY, rect)  #Rellena la celda con color gris
                 elif self.grid[row][col] == -1:  #Si la celda está marcada incorrectamente
-                    pygame.draw.rect(self.screen, RED, rect)  #Rellena la celda con color rojo
+                    pygame.draw.line(self.screen, RED, top_left, bottom_right, 4)
+                    pygame.draw.line(self.screen, RED, top_right, bottom_left, 4)
                 pygame.draw.rect(self.screen, BLACK, rect, 1)  #Dibuja el borde negro de la celda
 
     #Método para manejar los clics del jugador en la cuadrícula
