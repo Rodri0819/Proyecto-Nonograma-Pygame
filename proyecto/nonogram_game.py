@@ -82,36 +82,56 @@ class NonogramGame:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
-                    sys.exit()
+                    sys.Salir()
                 elif event.type == pygame.KEYDOWN:
                     waiting = False  # Salir de las instrucciones al presionar cualquier tecla
 
-    def show_pause_menu(self,screen, width, height):
-        options = ["Resume", "Guardar partida", "Restart", "Exit"]
-        selected_option = 0  # Opción inicialmente seleccionada
+    def show_pause_menu(self, screen, width, height):
+        options = ["Reanudar", "Guardar partida", "Reiniciar", "Salir"]
+        TEXT_COLOR = BLACK
+        HOVER_TEXT_COLOR = (150, 150, 150)  # Color de las letras al pasar el mouse por encima
 
         while True:
             screen.fill(WHITE)  # Rellena la pantalla con blanco
 
-            # Renderiza las opciones
+            # Obtener la posición actual del mouse
+            mouse_pos = pygame.mouse.get_pos()
+
+            # Lista para guardar los rectángulos de las opciones
+            option_rects = []
+
+            # Dibujar opciones
             for i, option in enumerate(options):
-                color = BLACK if i == selected_option else GRAY
-                option_surface = FONT.render(option, True, color)
-                screen.blit(option_surface, (width // 2 - option_surface.get_width() // 2, height // 2 - 50 + i * 30))
+                # Definir posición del texto
+                text_x = width // 2
+                text_y = height // 2 - 80 + i * 60
 
-            pygame.display.flip()  # Actualiza la pantalla
+                # Renderizar texto
+                if pygame.Rect(text_x - 100, text_y - 20, 200, 40).collidepoint(mouse_pos):
+                    text_surface = FONT.render(option, True, HOVER_TEXT_COLOR)  # Color de hover
+                else:
+                    text_surface = FONT.render(option, True, TEXT_COLOR)  # Color normal
 
+                # Centrar texto
+                text_rect = text_surface.get_rect(center=(text_x, text_y))
+                screen.blit(text_surface, text_rect)
+
+                # Guardar el rectángulo del texto para manejar clics
+                option_rects.append(text_rect)
+
+            pygame.display.flip()  # Actualizar pantalla
+
+            # Manejar eventos
             for event in pygame.event.get():
-                if event.type == pygame.QUIT:
+                if event.type == pygame.QUIT:  # Cerrar juego
                     pygame.quit()
                     sys.exit()
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_UP:  # Mover hacia arriba
-                        selected_option = (selected_option - 1) % len(options)
-                    elif event.key == pygame.K_DOWN:  # Mover hacia abajo
-                        selected_option = (selected_option + 1) % len(options)
-                    elif event.key == pygame.K_RETURN:  # Seleccionar opción
-                        return selected_option
+                if event.type == pygame.MOUSEBUTTONDOWN:  # Detectar clic
+                    if event.button == 1:  # Solo manejar clic izquierdo
+                        for i, rect in enumerate(option_rects):
+                            if rect.collidepoint(event.pos):  # Verificar si el clic fue en el texto
+                                return i  # Retornar el índice de la opción seleccionada
+
 
     def save_custom_nonogram(self, grid, rows, cols):
         directory = "nonogramas_creados"
@@ -207,7 +227,7 @@ class NonogramGame:
                     row_clues, col_clues = utils.generate_clues(solution, rows, cols)
             else:
                 pygame.quit()
-                sys.exit()
+                sys.Salir()
 
             # Ajustar tamaño de la pantalla según el tamaño del tablero
             self.adjust_screen_size(rows, cols)
@@ -227,18 +247,18 @@ class NonogramGame:
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT:
                         pygame.quit()
-                        sys.exit()
+                        sys.Salir()
                     if event.type == pygame.KEYDOWN:
                         if event.key == pygame.K_RETURN:  # Presiona Enter para pausar
                             selected_option = self.show_pause_menu(self.screen, self.WIDTH, self.HEIGHT)
-                            if selected_option == 0:  # Resume
+                            if selected_option == 0:  # Reanudar
                                 continue
                             elif selected_option == 1:  # Save game
                                 self.save_game(grid.get_grid(), rows, cols, elapsed_time)
-                            elif selected_option == 2:  # Restart
+                            elif selected_option == 2:  # Reiniciar
                                 start_time = pygame.time.get_ticks()
                                 grid.reset()
-                            elif selected_option == 3:  # Exit
+                            elif selected_option == 3:  # Salir
                                 running = False
                                 break
                         elif event.key == pygame.K_h:  # Presiona 'H' para ayuda
@@ -303,7 +323,7 @@ class NonogramGame:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
-                    sys.exit()
+                    sys.Salir()
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_RETURN:  # Confirmar entrada con Enter
                         if "x" in input_text and input_text.replace("x", "").isdigit():
@@ -339,7 +359,7 @@ class NonogramGame:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
-                    sys.exit()
+                    sys.Salir()
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     grid.handle_click(pygame.mouse.get_pos(), event.button)  # Permitir dibujo
                 if event.type == pygame.KEYDOWN:

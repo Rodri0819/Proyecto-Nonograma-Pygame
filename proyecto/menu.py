@@ -6,54 +6,83 @@ import datetime
 
 # Función que muestra el menú principal
 def show_menu(screen, width, height):
+    options = [
+        ("Cargar partida", "cargar_partida"),
+        ("Tablero de tamaño aleatorio", "random"),
+        ("Elegir tamaño del tablero", "choose_size"),
+        ("Jugar Nonograma Personalizado", "play_custom"),
+        ("Crear Nonograma", "create_nonogram"),
+        ("¿Cómo Jugar?", "tutorial"),
+        ("Cerrar nonograma", "exit")
+    ]
+
+    # Colores
+    BUTTON_COLOR = (200, 200, 200)  # Color de fondo del botón
+    HOVER_COLOR = (150, 150, 150)  # Color al pasar el mouse por encima
+    TEXT_COLOR = BLACK
+    BORDER_COLOR = BLACK
+    TITLE_BG_COLOR = (173, 216, 230)  # Fondo del título
+
+    # Posiciones y rectángulos para cada opción
+    option_rects = []
+
     while True:
-        # Rellena la pantalla con el color blanco
-        screen.fill(WHITE)
+        screen.fill(WHITE)  # Rellena la pantalla con blanco
 
-        # Renderizado de textos del título y las opciones del menú
-        title_surface = MENU_FONT.render("Seleccione modo:", True, BLACK)
-        option1_surface = FONT.render("1. Cargar partida", True, BLACK)
-        option2_surface = FONT.render("2. Tablero de tamaño aleatorio", True, BLACK)
-        option3_surface = FONT.render("3. Elegir tamaño del tablero", True, BLACK)
-        option4_surface = FONT.render("4. Jugar Nonograma Personalizado", True, BLACK)
-        option5_surface = FONT.render("5. Crear Nonograma", True, BLACK)
-        option6_surface = FONT.render("6. ¿Cómo Jugar?", True, BLACK)
-        option7_surface = FONT.render("7. Cerrar nonograma", True, BLACK)
+        # Dibujar título con fondo
+        title_surface = MENU_FONT.render("Seleccione modo", True, BLACK)
+        title_width, title_height = title_surface.get_width(), title_surface.get_height()
+        title_x = width - title_width // 2
+        title_y = height - 250
 
-        # Ajusta las posiciones con más espacio entre las líneas
-        screen.blit(title_surface, (width - title_surface.get_width() // 2, height - 200))
-        screen.blit(option1_surface, (width - option1_surface.get_width() // 2, height - 100))
-        screen.blit(option2_surface, (width - option2_surface.get_width() // 2, height - 50))
-        screen.blit(option3_surface, (width - option3_surface.get_width() // 2, height))
-        screen.blit(option4_surface, (width - option4_surface.get_width() // 2, height + 50))
-        screen.blit(option5_surface, (width - option5_surface.get_width() // 2, height + 100))
-        screen.blit(option6_surface, (width - option6_surface.get_width() // 2, height + 150))
-        screen.blit(option7_surface, (width - option7_surface.get_width() // 2, height + 200))
+        # Dibujar fondo para el título
+        title_bg_rect = pygame.Rect(title_x - 20, title_y - 10, title_width + 40, title_height + 20)
+        pygame.draw.rect(screen, TITLE_BG_COLOR, title_bg_rect)
+        pygame.draw.rect(screen, BORDER_COLOR, title_bg_rect, 2)  # Borde para el fondo del título
+        screen.blit(title_surface, (title_x, title_y))  # Dibujar texto del título
 
-        # Actualiza la pantalla
-        pygame.display.flip()
+        option_rects = []
+        mouse_pos = pygame.mouse.get_pos()  # Obtener la posición actual del mouse
 
-        # Captura los eventos
+        for i, (text, action) in enumerate(options):
+            option_surface = FONT.render(text, True, TEXT_COLOR)
+            option_x = width  # Centrar botones horizontalmente
+            option_y = height - 150 + i * 60  # Separación vertical entre botones
+            button_width = 300
+            button_height = 40
+
+            # Crear un rectángulo para el botón
+            button_rect = pygame.Rect(option_x - button_width // 2, option_y, button_width, button_height)
+
+            # Cambiar color de fondo si el mouse está sobre el botón
+            if button_rect.collidepoint(mouse_pos):
+                pygame.draw.rect(screen, HOVER_COLOR, button_rect)  # Color hover
+            else:
+                pygame.draw.rect(screen, BUTTON_COLOR, button_rect)  # Color normal
+
+            # Dibujar borde del botón
+            pygame.draw.rect(screen, BORDER_COLOR, button_rect, 2)
+
+            # Dibujar el texto de la opción centrado en el botón
+            text_x = button_rect.centerx - option_surface.get_width() // 2
+            text_y = button_rect.centery - option_surface.get_height() // 2
+            screen.blit(option_surface, (text_x, text_y))
+
+            # Guardar el rectángulo y la acción para manejar clics
+            option_rects.append((button_rect, action))
+
+        pygame.display.flip()  # Actualizar pantalla
+
+        # Manejar eventos
         for event in pygame.event.get():
-            if event.type == pygame.QUIT:
+            if event.type == pygame.QUIT:  # Cerrar juego
                 pygame.quit()
                 sys.exit()
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_1:
-                    return "cargar_partida"
-                elif event.key == pygame.K_2:
-                    return "random"
-                elif event.key == pygame.K_3:
-                    return "choose_size"
-                elif event.key == pygame.K_4:
-                    return "play_custom"
-                elif event.key == pygame.K_5:
-                    return "create_nonogram"
-                elif event.key == pygame.K_6:
-                    return "tutorial"
-                elif event.key == pygame.K_7:
-                    pygame.quit()
-                    sys.exit()
+            if event.type == pygame.MOUSEBUTTONDOWN:  # Detectar clic
+                if event.button == 1:  # Solo manejar clic izquierdo
+                    for button_rect, action in option_rects:
+                        if button_rect.collidepoint(event.pos):  # Verificar clic en un botón
+                            return action  # Retornar la acción correspondiente
 
 
 # Función que permite al jugador ingresar el tamaño del tablero
@@ -111,41 +140,68 @@ def show_saved_games(screen):
     # Ordenar las partidas guardadas del más reciente al más antiguo
     saved_games.sort(key=lambda x: datetime.datetime.strptime(x, "%Y%m%d_%H%M%S.pkl"), reverse=True)
 
+    TEXT_COLOR = BLACK
+    HOVER_TEXT_COLOR = (150, 150, 150)  # Color al pasar el mouse por encima
+    TITLE_FONT = MENU_FONT
+    OPTION_FONT = FONT
+
     while True:
         screen.fill(WHITE)  # Rellena la pantalla con blanco
 
         # Renderiza el título
-        title_surface = FONT.render("Partidas Guardadas:", True, BLACK)
+        title_surface = TITLE_FONT.render("Partidas Guardadas", True, TEXT_COLOR)
         screen.blit(title_surface, (screen.get_width() // 2 - title_surface.get_width() // 2, 20))
 
         # Mensaje instruccional
-        instruction_surface = FONT.render("Presiona un número (1-5) para cargar una partida", True, BLACK)
-        screen.blit(instruction_surface, (screen.get_width() // 2 - instruction_surface.get_width() // 2, 50))
+        instruction_surface = OPTION_FONT.render("Haz clic en una partida para cargarla", True, TEXT_COLOR)
+        screen.blit(instruction_surface, (screen.get_width() // 2 - instruction_surface.get_width() // 2, 70))
 
-        # Renderiza la lista de partidas guardadas, limitando a 5
+        # Dibujar las opciones de partidas guardadas
+        mouse_pos = pygame.mouse.get_pos()  # Obtener la posición del mouse
+        option_rects = []  # Lista para guardar los rectángulos de cada opción
+
         if saved_games:
             for i, game in enumerate(saved_games[:5]):  # Limitar a las primeras 5 partidas
-                game_surface = FONT.render(f"{i + 1}. {game}", True, BLACK)  # Mostrar el índice (1, 2, 3...)
-                screen.blit(game_surface, (screen.get_width() // 2 - game_surface.get_width() // 2, 100 + i * 30))
+                option_surface = OPTION_FONT.render(f"{i + 1}. {game}", True, TEXT_COLOR)
+
+                # Determinar posición del texto
+                text_x = screen.get_width() // 2 - option_surface.get_width() // 2
+                text_y = 120 + i * 50  # Espaciado entre opciones
+
+                # Crear un rectángulo para la opción
+                option_rect = pygame.Rect(text_x, text_y, option_surface.get_width(), option_surface.get_height())
+
+                # Cambiar color al pasar el mouse por encima
+                if option_rect.collidepoint(mouse_pos):
+                    option_surface = OPTION_FONT.render(f"{i + 1}. {game}", True, HOVER_TEXT_COLOR)
+
+                # Dibujar el texto
+                screen.blit(option_surface, (text_x, text_y))
+
+                # Guardar el rectángulo de la opción
+                option_rects.append((option_rect, game))
         else:
-            empty_surface = FONT.render("No hay partidas guardadas", True, BLACK)
-            screen.blit(empty_surface, (screen.get_width() // 2 - empty_surface.get_width() // 2, 100))
+            empty_surface = OPTION_FONT.render("No hay partidas guardadas", True, TEXT_COLOR)
+            screen.blit(empty_surface, (screen.get_width() // 2 - empty_surface.get_width() // 2, 120))
 
-        pygame.display.flip()  # Actualiza la pantalla
+        pygame.display.flip()  # Actualizar la pantalla
 
+        # Manejar eventos
         for event in pygame.event.get():
-            if event.type == pygame.QUIT:
+            if event.type == pygame.QUIT:  # Salir del juego
                 pygame.quit()
                 sys.exit()
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:  # Regresar con Escape
-                    return "menu_principal"  # Indica que debe regresar al menú principal
-
-                # Verificar si se presionó un número del 1 al 5
-                if pygame.K_1 <= event.key <= pygame.K_5:
-                    index = event.key - pygame.K_1  # Obtener el índice basado en la tecla presionada
-                    if 0 <= index < len(saved_games[:5]):
-                        return saved_games[index]  # Devuelve el nombre del archivo seleccionado
+            if event.type == pygame.MOUSEBUTTONDOWN:  # Detectar clic
+                if event.button == 1:  # Solo clic izquierdo
+                    for rect, game in option_rects:
+                        if rect.collidepoint(event.pos):  # Verificar si el clic fue en una opción
+                            if os.path.exists(os.path.join("partidas_guardadas", game)):
+                                return game  # Retorna el nombre del archivo seleccionado
+                            else:
+                                print(f"El archivo {game} no existe.")
+                                break  # Salir del bucle si el archivo no existe
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:  # Salir al menú principal
+                return "menu_principal"
 
 def get_created_games():
     # Devuelve una lista de los archivos de partidas guardadas.
@@ -158,41 +214,68 @@ def get_created_games():
 def show_created_games(screen):
     created_games = get_created_games()
 
-    # Ordenar las partidas creadas del más reciente al más antiguo
+    # Ordenar los nonogramas creados del más reciente al más antiguo
     created_games.sort(key=lambda x: datetime.datetime.strptime(x, "%Y%m%d_%H%M%S.pkl"), reverse=True)
+
+    TEXT_COLOR = BLACK
+    HOVER_TEXT_COLOR = (150, 150, 150)  # Color al pasar el mouse por encima
+    TITLE_FONT = MENU_FONT
+    OPTION_FONT = FONT
 
     while True:
         screen.fill(WHITE)  # Rellena la pantalla con blanco
 
         # Renderiza el título
-        title_surface = FONT.render("Nonogramas Creados:", True, BLACK)
+        title_surface = TITLE_FONT.render("Nonogramas Creados:", True, TEXT_COLOR)
         screen.blit(title_surface, (screen.get_width() // 2 - title_surface.get_width() // 2, 20))
 
         # Mensaje instruccional
-        instruction_surface = FONT.render("Presiona un número (1-5) para cargar una partida", True, BLACK)
-        screen.blit(instruction_surface, (screen.get_width() // 2 - instruction_surface.get_width() // 2, 50))
+        instruction_surface = OPTION_FONT.render("Haz clic en un nonograma para cargarlo", True, TEXT_COLOR)
+        screen.blit(instruction_surface, (screen.get_width() // 2 - instruction_surface.get_width() // 2, 70))
 
-        # Renderiza la lista de partidas guardadas, limitando a 5
+        # Dibujar las opciones de nonogramas creados
+        mouse_pos = pygame.mouse.get_pos()  # Obtener la posición del mouse
+        option_rects = []  # Lista para guardar los rectángulos de cada opción
+
         if created_games:
-            for i, game in enumerate(created_games[:5]):  # Limitar a las primeras 5 partidas
-                game_surface = FONT.render(f"{i + 1}. {game}", True, BLACK)  # Mostrar el índice (1, 2, 3...)
-                screen.blit(game_surface, (screen.get_width() // 2 - game_surface.get_width() // 2, 100 + i * 30))
+            for i, game in enumerate(created_games[:5]):  # Limitar a los primeros 5 nonogramas
+                option_surface = OPTION_FONT.render(f"{i + 1}. {game}", True, TEXT_COLOR)
+
+                # Determinar posición del texto
+                text_x = screen.get_width() // 2 - option_surface.get_width() // 2
+                text_y = 120 + i * 50  # Espaciado entre opciones
+
+                # Crear un rectángulo para la opción
+                option_rect = pygame.Rect(text_x, text_y, option_surface.get_width(), option_surface.get_height())
+
+                # Cambiar color al pasar el mouse por encima
+                if option_rect.collidepoint(mouse_pos):
+                    option_surface = OPTION_FONT.render(f"{i + 1}. {game}", True, HOVER_TEXT_COLOR)
+
+                # Dibujar el texto
+                screen.blit(option_surface, (text_x, text_y))
+
+                # Guardar el rectángulo de la opción
+                option_rects.append((option_rect, game))
         else:
-            empty_surface = FONT.render("No hay nonogramas creados", True, BLACK)
-            screen.blit(empty_surface, (screen.get_width() // 2 - empty_surface.get_width() // 2, 100))
+            empty_surface = OPTION_FONT.render("No hay nonogramas creados", True, TEXT_COLOR)
+            screen.blit(empty_surface, (screen.get_width() // 2 - empty_surface.get_width() // 2, 120))
 
-        pygame.display.flip()  # Actualiza la pantalla
+        pygame.display.flip()  # Actualizar la pantalla
 
+        # Manejar eventos
         for event in pygame.event.get():
-            if event.type == pygame.QUIT:
+            if event.type == pygame.QUIT:  # Salir del juego
                 pygame.quit()
                 sys.exit()
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:  # Regresar con Escape
-                    return "menu_principal"  # Indica que debe regresar al menú principal
-
-                # Verificar si se presionó un número del 1 al 5
-                if pygame.K_1 <= event.key <= pygame.K_5:
-                    index = event.key - pygame.K_1  # Obtener el índice basado en la tecla presionada
-                    if 0 <= index < len(created_games[:5]):
-                        return created_games[index]  # Devuelve el nombre del archivo seleccionado
+            if event.type == pygame.MOUSEBUTTONDOWN:  # Detectar clic
+                if event.button == 1:  # Solo clic izquierdo
+                    for rect, game in option_rects:
+                        if rect.collidepoint(event.pos):  # Verificar si el clic fue en una opción
+                            if os.path.exists(os.path.join("nonogramas_creados", game)):
+                                return game  # Retorna el nombre del archivo seleccionado
+                            else:
+                                print(f"El archivo {game} no existe.")
+                                break  # Salir del bucle si el archivo no existe
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:  # Salir al menú principal
+                return "menu_principal"

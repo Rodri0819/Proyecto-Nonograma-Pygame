@@ -21,4 +21,4 @@ LEFT_MARGIN_BASE = 24
 pygame.font.init()
 FONT = pygame.font.SysFont(None, 24)
 WIN_FONT = pygame.font.SysFont(None, 48)
-MENU_FONT = pygame.font.SysFont(None, 40)
+MENU_FONT = pygame.font.SysFont(None, 48)
