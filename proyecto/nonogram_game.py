@@ -301,11 +301,11 @@ class NonogramGame:
 
                 pygame.display.flip()
 
-
     def ask_board_size(self):
         """Permite al usuario ingresar el tamaño del tablero en formato NxM."""
         running = True
         input_text = ""
+        error_message = ""  # Mensaje de error para mostrar en pantalla
 
         while running:
             self.screen.fill(WHITE)
@@ -318,30 +318,83 @@ class NonogramGame:
             input_surface = FONT.render(input_text, True, BLACK)
             self.screen.blit(input_surface, (self.WIDTH // 2 - input_surface.get_width() // 2, 200))
 
+            # Mostrar mensaje de error si existe
+            if error_message:
+                error_surface = FONT.render(error_message, True, (255, 0, 0))  # Color rojo para errores
+                self.screen.blit(error_surface, (self.WIDTH // 2 - error_surface.get_width() // 2, 300))
+
             pygame.display.flip()
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
-                    sys.Salir()
+                    sys.exit()
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_RETURN:  # Confirmar entrada con Enter
-                        if "x" in input_text and input_text.replace("x", "").isdigit():
-                            rows, cols = map(int, input_text.split("x"))
-                            if 5 <= rows <= 20 and 5 <= cols <= 20:  # Validar límites
-                                return rows, cols
+                        if "x" in input_text:
+                            parts = input_text.split("x")
+                            if len(parts) == 2 and parts[0].isdigit() and parts[1].isdigit():
+                                rows, cols = map(int, parts)
+                                if 5 <= rows <= 20 and 5 <= cols <= 20:  # Validar límites
+                                    return rows, cols
+                                else:
+                                    error_message = "Tamaño inválido. Elija dimensiones entre 5 y 20."
                             else:
-                                print("Tamaño inválido. Elija dimensiones entre 5 y 20.")
-                                input_text = ""  # Limpiar entrada
+                                error_message = "Formato inválido. Use NxM (ejemplo: 10x10)."
                         else:
-                            print("Formato inválido. Use NxM (ejemplo: 10x10).")
-                            input_text = ""  # Limpiar entrada
+                            error_message = "Formato inválido. Use NxM (ejemplo: 10x10)."
+                        input_text = ""  # Limpiar entrada después de un error
                     elif event.key == pygame.K_BACKSPACE:  # Borrar último carácter
                         input_text = input_text[:-1]
+                        error_message = ""  # Limpiar mensaje de error
                     elif event.unicode.isdigit() or event.unicode == "x":  # Aceptar números y "x"
                         input_text += event.unicode
+                        error_message = ""  # Limpiar mensaje de error
 
         return 5, 5  # Valor por defecto si se cancela
+
+    def ask_nonogram_name(self):
+        """Permite al usuario ingresar un nombre para el nonograma."""
+        running = True
+        input_text = ""
+        error_message = ""  # Mensaje de error para mostrar en pantalla
+
+        while running:
+            self.screen.fill(WHITE)
+
+            # Mensajes en pantalla
+            title_surface = FONT.render("Ingrese un nombre para el nonograma:", True, BLACK)
+            self.screen.blit(title_surface, (self.WIDTH // 2 - title_surface.get_width() // 2, 100))
+
+            # Mostrar el texto ingresado por el usuario
+            input_surface = FONT.render(input_text, True, BLACK)
+            self.screen.blit(input_surface, (self.WIDTH // 2 - input_surface.get_width() // 2, 200))
+
+            # Mostrar mensaje de error si existe
+            if error_message:
+                error_surface = FONT.render(error_message, True, (255, 0, 0))  # Color rojo para errores
+                self.screen.blit(error_surface, (self.WIDTH // 2 - error_surface.get_width() // 2, 300))
+
+            pygame.display.flip()
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_RETURN:  # Confirmar entrada con Enter
+                        if input_text.strip():  # Validar que no esté vacío
+                            return input_text.strip()  # Retornar el texto limpio
+                        else:
+                            error_message = "El nombre no puede estar vacío."
+                    elif event.key == pygame.K_BACKSPACE:  # Borrar último carácter
+                        input_text = input_text[:-1]
+                        error_message = ""  # Limpiar mensaje de error
+                    elif event.unicode.isalnum() or event.unicode in "_-":  # Aceptar caracteres válidos
+                        input_text += event.unicode
+                        error_message = ""  # Limpiar mensaje de error
+
+        return "nonograma_sin_nombre"  # Nombre por defecto si se cancela
 
     def create_nonogram(self):
         """Crea un nonograma personalizado permitiendo elegir el tamaño del tablero."""
@@ -359,16 +412,37 @@ class NonogramGame:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
-                    sys.Salir()
+                    sys.exit()
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     grid.handle_click(pygame.mouse.get_pos(), event.button)  # Permitir dibujo
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_RETURN:  # Finalizar diseño
                         solution = grid.get_grid()
                         row_clues, col_clues = utils.generate_clues(solution, self.ROWS, self.COLS)
-                        self.save_custom_nonogram(solution, self.ROWS, self.COLS)
+                        nonogram_name = self.ask_nonogram_name()  # Pedir el nombre del nonograma
+                        self.save_custom_nonogram(solution, self.ROWS, self.COLS, nonogram_name)
                         editing = False  # Salir del editor
                     elif event.key == pygame.K_ESCAPE:  # Cancelar diseño
                         editing = False
 
             pygame.display.flip()
+
+    def save_custom_nonogram(self, grid, rows, cols, name):
+        """Guarda un nonograma personalizado con un nombre específico."""
+        directory = "nonogramas_creados"
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+
+        # Usar el nombre proporcionado
+        filename = os.path.join(directory, f"{name}.pkl")
+
+        data = {
+            'grid': grid,
+            'rows': rows,
+            'cols': cols,
+            'elapsed_time': 0
+        }
+        with open(filename, 'wb') as f:
+            pickle.dump(data, f)
+
+        print(f"Nonograma guardado en: {filename}")

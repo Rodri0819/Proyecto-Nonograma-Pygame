@@ -134,148 +134,73 @@ def get_saved_games():
     return [f for f in os.listdir(directory) if f.endswith('.pkl')]  # Filtra solo archivos .pkl
 
 
-def show_saved_games(screen):
-    saved_games = get_saved_games()
-
-    # Ordenar las partidas guardadas del más reciente al más antiguo
-    saved_games.sort(key=lambda x: datetime.datetime.strptime(x, "%Y%m%d_%H%M%S.pkl"), reverse=True)
-
-    TEXT_COLOR = BLACK
-    HOVER_TEXT_COLOR = (150, 150, 150)  # Color al pasar el mouse por encima
-    TITLE_FONT = MENU_FONT
-    OPTION_FONT = FONT
-
-    while True:
-        screen.fill(WHITE)  # Rellena la pantalla con blanco
-
-        # Renderiza el título
-        title_surface = TITLE_FONT.render("Partidas Guardadas", True, TEXT_COLOR)
-        screen.blit(title_surface, (screen.get_width() // 2 - title_surface.get_width() // 2, 20))
-
-        # Mensaje instruccional
-        instruction_surface = OPTION_FONT.render("Haz clic en una partida para cargarla", True, TEXT_COLOR)
-        screen.blit(instruction_surface, (screen.get_width() // 2 - instruction_surface.get_width() // 2, 70))
-
-        # Dibujar las opciones de partidas guardadas
-        mouse_pos = pygame.mouse.get_pos()  # Obtener la posición del mouse
-        option_rects = []  # Lista para guardar los rectángulos de cada opción
-
-        if saved_games:
-            for i, game in enumerate(saved_games[:5]):  # Limitar a las primeras 5 partidas
-                option_surface = OPTION_FONT.render(f"{i + 1}. {game}", True, TEXT_COLOR)
-
-                # Determinar posición del texto
-                text_x = screen.get_width() // 2 - option_surface.get_width() // 2
-                text_y = 120 + i * 50  # Espaciado entre opciones
-
-                # Crear un rectángulo para la opción
-                option_rect = pygame.Rect(text_x, text_y, option_surface.get_width(), option_surface.get_height())
-
-                # Cambiar color al pasar el mouse por encima
-                if option_rect.collidepoint(mouse_pos):
-                    option_surface = OPTION_FONT.render(f"{i + 1}. {game}", True, HOVER_TEXT_COLOR)
-
-                # Dibujar el texto
-                screen.blit(option_surface, (text_x, text_y))
-
-                # Guardar el rectángulo de la opción
-                option_rects.append((option_rect, game))
-        else:
-            empty_surface = OPTION_FONT.render("No hay partidas guardadas", True, TEXT_COLOR)
-            screen.blit(empty_surface, (screen.get_width() // 2 - empty_surface.get_width() // 2, 120))
-
-        pygame.display.flip()  # Actualizar la pantalla
-
-        # Manejar eventos
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:  # Salir del juego
-                pygame.quit()
-                sys.exit()
-            if event.type == pygame.MOUSEBUTTONDOWN:  # Detectar clic
-                if event.button == 1:  # Solo clic izquierdo
-                    for rect, game in option_rects:
-                        if rect.collidepoint(event.pos):  # Verificar si el clic fue en una opción
-                            if os.path.exists(os.path.join("partidas_guardadas", game)):
-                                return game  # Retorna el nombre del archivo seleccionado
-                            else:
-                                print(f"El archivo {game} no existe.")
-                                break  # Salir del bucle si el archivo no existe
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:  # Salir al menú principal
-                return "menu_principal"
-
-def get_created_games():
-    # Devuelve una lista de los archivos de partidas guardadas.
+def show_created_games(screen):
+    """Muestra una lista de nonogramas creados y permite al usuario seleccionar uno."""
     directory = "nonogramas_creados"
     if not os.path.exists(directory):
-        return []  # Devuelve una lista vacía si no existe la carpeta
+        os.makedirs(directory)
 
-    return [f for f in os.listdir(directory) if f.endswith('.pkl')]  # Filtra solo archivos .pkl
+    # Obtener la lista de archivos en la carpeta
+    created_games = [f for f in os.listdir(directory) if f.endswith(".pkl")]
 
-def show_created_games(screen):
-    created_games = get_created_games()
+    # Ordenar los archivos
+    try:
+        created_games.sort(
+            key=lambda x: datetime.datetime.strptime(x, "%Y%m%d_%H%M%S.pkl"),
+            reverse=True
+        )
+    except ValueError:
+        created_games.sort()  # Orden alfabético si hay nombres personalizados
 
-    # Ordenar los nonogramas creados del más reciente al más antiguo
-    created_games.sort(key=lambda x: datetime.datetime.strptime(x, "%Y%m%d_%H%M%S.pkl"), reverse=True)
+    selected_game = None
+    running = True
 
-    TEXT_COLOR = BLACK
-    HOVER_TEXT_COLOR = (150, 150, 150)  # Color al pasar el mouse por encima
-    TITLE_FONT = MENU_FONT
-    OPTION_FONT = FONT
+    while running:
+        screen.fill(WHITE)
 
-    while True:
-        screen.fill(WHITE)  # Rellena la pantalla con blanco
+        # Título
+        title_surface = FONT.render("Selecciona un nonograma para jugar:", True, BLACK)
+        screen.blit(title_surface, (screen.get_width() // 2 - title_surface.get_width() // 2, 50))
 
-        # Renderiza el título
-        title_surface = TITLE_FONT.render("Nonogramas Creados:", True, TEXT_COLOR)
-        screen.blit(title_surface, (screen.get_width() // 2 - title_surface.get_width() // 2, 20))
+        # Obtener la posición del mouse
+        mouse_pos = pygame.mouse.get_pos()
 
-        # Mensaje instruccional
-        instruction_surface = OPTION_FONT.render("Haz clic en un nonograma para cargarlo", True, TEXT_COLOR)
-        screen.blit(instruction_surface, (screen.get_width() // 2 - instruction_surface.get_width() // 2, 70))
+        # Calcular posición inicial para centrar verticalmente
+        total_height = len(created_games) * 40
+        start_y = screen.get_height() // 2 - total_height // 2
 
-        # Dibujar las opciones de nonogramas creados
-        mouse_pos = pygame.mouse.get_pos()  # Obtener la posición del mouse
-        option_rects = []  # Lista para guardar los rectángulos de cada opción
+        # Mostrar la lista de nonogramas
+        for i, game in enumerate(created_games):
+            text_color = BLACK
+            # Detectar si el mouse está sobre una opción
+            text_surface = FONT.render(game, True, text_color)
+            text_x = screen.get_width() // 2 - text_surface.get_width() // 2
+            text_y = start_y + i * 40
 
-        if created_games:
-            for i, game in enumerate(created_games[:5]):  # Limitar a los primeros 5 nonogramas
-                option_surface = OPTION_FONT.render(f"{i + 1}. {game}", True, TEXT_COLOR)
+            # Detectar si el cursor está sobre el texto
+            if pygame.Rect(text_x, text_y, text_surface.get_width(), text_surface.get_height()).collidepoint(mouse_pos):
+                text_color = (150, 150, 150)  # Cambiar el color al pasar el cursor
+                text_surface = FONT.render(game, True, text_color)
 
-                # Determinar posición del texto
-                text_x = screen.get_width() // 2 - option_surface.get_width() // 2
-                text_y = 120 + i * 50  # Espaciado entre opciones
+            screen.blit(text_surface, (text_x, text_y))
 
-                # Crear un rectángulo para la opción
-                option_rect = pygame.Rect(text_x, text_y, option_surface.get_width(), option_surface.get_height())
+        pygame.display.flip()
 
-                # Cambiar color al pasar el mouse por encima
-                if option_rect.collidepoint(mouse_pos):
-                    option_surface = OPTION_FONT.render(f"{i + 1}. {game}", True, HOVER_TEXT_COLOR)
-
-                # Dibujar el texto
-                screen.blit(option_surface, (text_x, text_y))
-
-                # Guardar el rectángulo de la opción
-                option_rects.append((option_rect, game))
-        else:
-            empty_surface = OPTION_FONT.render("No hay nonogramas creados", True, TEXT_COLOR)
-            screen.blit(empty_surface, (screen.get_width() // 2 - empty_surface.get_width() // 2, 120))
-
-        pygame.display.flip()  # Actualizar la pantalla
-
-        # Manejar eventos
         for event in pygame.event.get():
-            if event.type == pygame.QUIT:  # Salir del juego
+            if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
-            if event.type == pygame.MOUSEBUTTONDOWN:  # Detectar clic
-                if event.button == 1:  # Solo clic izquierdo
-                    for rect, game in option_rects:
-                        if rect.collidepoint(event.pos):  # Verificar si el clic fue en una opción
-                            if os.path.exists(os.path.join("nonogramas_creados", game)):
-                                return game  # Retorna el nombre del archivo seleccionado
-                            else:
-                                print(f"El archivo {game} no existe.")
-                                break  # Salir del bucle si el archivo no existe
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:  # Salir al menú principal
-                return "menu_principal"
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:  # Click izquierdo
+                    for i, game in enumerate(created_games):
+                        text_surface = FONT.render(game, True, BLACK)
+                        text_x = screen.get_width() // 2 - text_surface.get_width() // 2
+                        text_y = start_y + i * 40
+                        if pygame.Rect(text_x, text_y, text_surface.get_width(), text_surface.get_height()).collidepoint(mouse_pos):
+                            selected_game = game
+                            running = False
+                            break
+
+    if selected_game:
+        return selected_game  # Retornar el archivo seleccionado
+    return "menu_principal"  # Si no selecciona nada, regresar al menú principal
