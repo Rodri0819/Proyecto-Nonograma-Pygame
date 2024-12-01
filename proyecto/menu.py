@@ -84,6 +84,63 @@ def show_menu(screen, width, height):
                         if button_rect.collidepoint(event.pos):  # Verificar clic en un botón
                             return action  # Retornar la acción correspondiente
 
+def show_saved_games(screen):
+    saved_games = get_saved_games()
+
+    # Intentar ordenar las partidas guardadas, manejar excepciones si el formato no coincide
+    try:
+        saved_games.sort(key=lambda x: datetime.datetime.strptime(x, "%Y%m%d_%H%M%S.pkl"), reverse=True)
+    except ValueError:
+        saved_games.sort()  # Si no coincide el formato, orden alfabético
+
+    TEXT_COLOR = BLACK
+    HOVER_TEXT_COLOR = (150, 150, 150)
+    TITLE_FONT = MENU_FONT
+    OPTION_FONT = FONT
+
+    while True:
+        screen.fill(WHITE)
+
+        # Título
+        title_surface = TITLE_FONT.render("Partidas Guardadas", True, TEXT_COLOR)
+        screen.blit(title_surface, (screen.get_width() // 2 - title_surface.get_width() // 2, 20))
+
+        # Instrucción
+        instruction_surface = OPTION_FONT.render("Haz clic en una partida para cargarla", True, TEXT_COLOR)
+        screen.blit(instruction_surface, (screen.get_width() // 2 - instruction_surface.get_width() // 2, 70))
+
+        mouse_pos = pygame.mouse.get_pos()
+        option_rects = []
+
+        if saved_games:
+            for i, game in enumerate(saved_games[:5]):
+                option_surface = OPTION_FONT.render(f"{i + 1}. {game}", True, TEXT_COLOR)
+                text_x = screen.get_width() // 2 - option_surface.get_width() // 2
+                text_y = 120 + i * 50
+
+                option_rect = pygame.Rect(text_x, text_y, option_surface.get_width(), option_surface.get_height())
+
+                if option_rect.collidepoint(mouse_pos):
+                    option_surface = OPTION_FONT.render(f"{i + 1}. {game}", True, HOVER_TEXT_COLOR)
+
+                screen.blit(option_surface, (text_x, text_y))
+                option_rects.append((option_rect, game))
+        else:
+            empty_surface = OPTION_FONT.render("No hay partidas guardadas", True, TEXT_COLOR)
+            screen.blit(empty_surface, (screen.get_width() // 2 - empty_surface.get_width() // 2, 120))
+
+        pygame.display.flip()
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                for rect, game in option_rects:
+                    if rect.collidepoint(event.pos):
+                        return game  # Retorna el archivo seleccionado
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                return "menu_principal"
 
 # Función que permite al jugador ingresar el tamaño del tablero
 def get_board_size(screen, width, height):
@@ -121,9 +178,10 @@ def get_board_size(screen, width, height):
                         user_text = ''  # Borra el texto ingresado para que el usuario intente nuevamente
                 elif event.key == pygame.K_BACKSPACE:  # Si se presiona la tecla de retroceso
                     user_text = user_text[:-1]  # Borra el último caracter del texto ingresado
+                elif event.key == pygame.K_ESCAPE:  # Si se presiona la tecla ESC
+                    return None  # Salir de la función devolviendo `None`
                 else:
                     user_text += event.unicode  # Agrega el carácter ingresado al texto
-
 
 def get_saved_games():
     # Devuelve una lista de los archivos de partidas guardadas.
@@ -200,7 +258,10 @@ def show_created_games(screen):
                             selected_game = game
                             running = False
                             break
+            elif event.type == pygame.KEYDOWN:  # Detectar teclas
+                if event.key == pygame.K_ESCAPE:  # Si presiona Esc
+                    running = False  # Salir del menú de selección
+                    selected_game = None  # No seleccionar nada
 
-    if selected_game:
-        return selected_game  # Retornar el archivo seleccionado
-    return "menu_principal"  # Si no selecciona nada, regresar al menú principal
+    return selected_game  # Retornar el archivo seleccionado o None si presionó Esc
+

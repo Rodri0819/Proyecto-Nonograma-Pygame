@@ -153,35 +153,60 @@ class NonogramGame:
 
         print(f"Nonograma guardado en: {filename}")
 
-    def save_game(self, grid, rows, cols, elapsed_time, save_filename=None):
-
+    def save_game(self, grid, rows, cols, elapsed_time, solution):
         """Guarda el estado de la partida en un archivo usando pickle."""
-        # Crear la carpeta si no existe
         directory = "partidas_guardadas"
         if not os.path.exists(directory):
             os.makedirs(directory)
 
-        if save_filename is None:
-            now = datetime.datetime.now()
-            timestamp = now.strftime("%Y%m%d_%H%M%S")  # Formato: YYYYMMDD_HHMMSS
-            save_filename = f"{timestamp}.pkl"  # Nombre del archivo con la fecha y hora
+        now = datetime.datetime.now()
+        timestamp = now.strftime("%Y%m%d_%H%M%S")
+        save_filename = f"{timestamp}.pkl"
 
-        filepath = os.path.join(directory, save_filename)  # Ruta completa del archivo
+        filepath = os.path.join(directory, save_filename)
 
         data = {
-            'grid': grid,  # El estado de la cuadrícula
-            'rows': rows,  # Número de filas
-            'cols': cols,  # Número de columnas
-            'elapsed_time': elapsed_time
+            'grid': grid,  # Estado actual del tablero
+            'rows': rows,
+            'cols': cols,
+            'elapsed_time': elapsed_time,
+            'solution': solution,  # Solución para verificar partidas cargadas
         }
-        with open(filepath, 'wb') as f:  # Modo binario
+
+        with open(filepath, 'wb') as f:
             pickle.dump(data, f)
 
+        print(f"Partida guardada en: {filepath}")
+
+        with open(filepath, 'wb') as f:
+            pickle.dump(data, f)
+
+        print(f"Partida guardada en: {filepath}")
+
     def load_game(self, load_filename):
-        #Carga el estado de la partida desde un archivo usando pickle
-        with open(load_filename, 'rb') as f:  # Modo binario
+        """Carga el estado de la partida desde un archivo usando pickle."""
+        with open(load_filename, 'rb') as f:
             data = pickle.load(f)
-        return data['grid'], data['rows'], data['cols'], data['elapsed_time']  # Devuelve la cuadrícula, sus dimensiones y tiempo transcurrido
+
+        grid = data['grid']
+        rows = data['rows']
+        cols = data['cols']
+        elapsed_time = data.get('elapsed_time', 0)  # Asegura que tenga un valor por defecto
+        solution = data.get('solution', None)
+
+        return grid, rows, cols, elapsed_time, solution
+
+    def load_custom_game(self, load_filename):
+        """Carga el estado de una partida personalizada desde un archivo usando pickle."""
+        with open(load_filename, 'rb') as f:
+            data = pickle.load(f)
+
+        solution = data['grid']  # En partidas personalizadas, el 'grid' es la solución
+        rows = data['rows']
+        cols = data['cols']
+        elapsed_time = data.get('elapsed_time', 0)  # Asegúrate de manejar 'elapsed_time'
+
+        return solution, rows, cols, elapsed_time
 
     def main_loop(self):
         while True:  # Bucle externo para reiniciar el juego
@@ -190,71 +215,114 @@ class NonogramGame:
             self.HEIGHT = 600
             self.screen = pygame.display.set_mode((self.WIDTH, self.HEIGHT))
 
+            # Inicializar variables predeterminadas
+            rows, cols = self.ROWS, self.COLS
+            row_clues, col_clues = [], []
+            grid = None
+            solution = None  # Inicializamos solution como None
+
             # Mostrar menú inicial
             option = menu.show_menu(self.screen, self.WIDTH // 2, self.HEIGHT // 2)
 
             if option == "cargar_partida":
-                # Mostrar partidas guardadas
                 selected_game = menu.show_saved_games(self.screen)
                 if selected_game == "menu_principal":
-                    continue  # Regresar al menú principal
-                if selected_game:  # Si se seleccionó un archivo
+                    continue
+                if selected_game:
                     game_filename = os.path.join("partidas_guardadas", selected_game)
-                    grid_data, rows, cols, elapsed_time = self.load_game(game_filename)
+                    grid_data, rows, cols, elapsed_time, solution = self.load_game(game_filename)
                     start_time = pygame.time.get_ticks() - elapsed_time * 1000
                     grid = Grid(rows, cols, self.SQUARE_SIZE, self.TOP_MARGIN, self.LEFT_MARGIN, self.screen, grid_data)
+
             elif option == "random":
                 rows = random.randint(5, 10)
                 cols = random.randint(5, 10)
+                solution = self.generate_solution(rows, cols)
+                row_clues, col_clues = utils.generate_clues(solution, rows, cols)
+                grid = Grid(rows, cols, self.SQUARE_SIZE, self.TOP_MARGIN, self.LEFT_MARGIN, self.screen)
+
             elif option == "choose_size":
-                rows, cols = menu.get_board_size(self.screen, self.WIDTH, self.HEIGHT)
+                result = menu.get_board_size(self.screen, self.WIDTH,
+                                             self.HEIGHT)  # Llama a la función para obtener el tamaño
+                if result is None:  # Si el usuario presionó ESC y no eligió tamaño
+                    continue  # Regresar al menú principal
+
+                rows, cols = result  # Desempaquetar las dimensiones
+                solution = self.generate_solution(rows, cols)  # Generar una solución para el tablero
+                row_clues, col_clues = utils.generate_clues(solution, rows,
+                                                            cols)  # Generar pistas para las filas y columnas
+                grid = Grid(rows, cols, self.SQUARE_SIZE, self.TOP_MARGIN, self.LEFT_MARGIN,
+                            self.screen)  # Crear el grid
+
             elif option == "tutorial":
                 self.run_tutorial()
                 continue  # Vuelve al menú después del tutorial
+
+
             elif option == "create_nonogram":
-                self.create_nonogram()  # Llama al editor para crear un nonograma
-                continue  # Regresa al menú principal después de guardar el nonograma
+                self.create_nonogram()
+                continue  # Regresar al menú principal después de guardar el nonograma
+
+
             elif option == "play_custom":
-                # Mostrar partidas creadas
                 selected_game = menu.show_created_games(self.screen)
-                if selected_game == "menu_principal":
-                    continue  # Regresar al menú principal
-                if selected_game:  # Si se seleccionó un archivo
+                if selected_game == "menu_principal" or selected_game is None:
+                    continue  # Regresar al menú principal si el usuario presiona ESC o selecciona "menu_principal"
+
+                if selected_game:
                     created_game_filename = os.path.join("nonogramas_creados", selected_game)
-                    solution, rows, cols, elapsed_time = self.load_game(created_game_filename)
+                    solution, rows, cols, elapsed_time = self.load_custom_game(created_game_filename)
                     start_time = pygame.time.get_ticks() - elapsed_time * 1000
-                    grid = Grid(rows, cols, self.SQUARE_SIZE, self.TOP_MARGIN, self.LEFT_MARGIN, self.screen, solution)
+                    grid = Grid(rows, cols, self.SQUARE_SIZE, self.TOP_MARGIN, self.LEFT_MARGIN, self.screen)
                     row_clues, col_clues = utils.generate_clues(solution, rows, cols)
+                else:
+                    print("Error: No se pudo cargar el juego personalizado.")
+
+                    # Comenzar a jugar el tablero personalizado
+                    playing = True
+                    while playing:
+                        for event in pygame.event.get():
+                            if event.type == pygame.QUIT:
+                                pygame.quit()
+                                sys.exit()
+                            if event.type == pygame.KEYDOWN:
+                                if event.key == pygame.K_ESCAPE:
+                                    playing = False  # Salir del tablero personalizado y volver al menú principal
+                            if event.type == pygame.MOUSEBUTTONDOWN:
+                                grid.handle_click(pygame.mouse.get_pos(), event.button)
+
+                        # Dibujar el tablero y manejar el juego
+                        self.screen.fill(WHITE)
+                        grid.draw(row_clues, col_clues)
+                        pygame.display.flip()
             else:
                 pygame.quit()
-                sys.Salir()
+                sys.exit()
+
+            # Validar que grid y solution se hayan inicializado
+            if grid is None:
+                grid = Grid(rows, cols, self.SQUARE_SIZE, self.TOP_MARGIN, self.LEFT_MARGIN, self.screen)
+            if solution is None:
+                solution = self.generate_solution(rows, cols)  # Generar solución por defecto
+                row_clues, col_clues = utils.generate_clues(solution, rows, cols)
 
             # Ajustar tamaño de la pantalla según el tamaño del tablero
             self.adjust_screen_size(rows, cols)
 
-            if option == "choose_size" or option == "random":
-                # Generar solución y pistas
-                solution = self.generate_solution(rows, cols)
-                row_clues, col_clues = utils.generate_clues(solution, rows, cols)
-
-            # Si se carga un juego, no reiniciar el tiempo
-            if option != "cargar_partida":
-                start_time = pygame.time.get_ticks()
-                grid = Grid(rows, cols, self.SQUARE_SIZE, self.TOP_MARGIN, self.LEFT_MARGIN, self.screen)
-
+            start_time = pygame.time.get_ticks()
             running = True
             while running:
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT:
                         pygame.quit()
-                        sys.Salir()
+                        sys.exit()
                     if event.type == pygame.KEYDOWN:
-                        if event.key == pygame.K_RETURN:  # Presiona Enter para pausar
+                        if event.key == pygame.K_ESCAPE:
                             selected_option = self.show_pause_menu(self.screen, self.WIDTH, self.HEIGHT)
                             if selected_option == 0:  # Reanudar
                                 continue
-                            elif selected_option == 1:  # Save game
-                                self.save_game(grid.get_grid(), rows, cols, elapsed_time)
+                            elif selected_option == 1:  # Guardar partida
+                                self.save_game(grid.get_grid(), rows, cols, elapsed_time, solution)
                             elif selected_option == 2:  # Reiniciar
                                 start_time = pygame.time.get_ticks()
                                 grid.reset()
@@ -268,7 +336,7 @@ class NonogramGame:
                         if event.type == pygame.MOUSEBUTTONDOWN:
                             grid.handle_click(pygame.mouse.get_pos(), event.button)
 
-                elapsed_time = (pygame.time.get_ticks() - start_time) // 1000  # Tiempo en segundos
+                elapsed_time = (pygame.time.get_ticks() - start_time) // 1000
 
                 # Formatear tiempo como HH:MM:SS
                 hours = elapsed_time // 3600
@@ -280,7 +348,7 @@ class NonogramGame:
                 grid.draw(row_clues, col_clues)
                 timer_surface = FONT.render(f"Tiempo: {time_display}", True, BLACK)
                 self.screen.blit(timer_surface, (
-                self.WIDTH - timer_surface.get_width() - 10, self.HEIGHT - timer_surface.get_height() - 10))
+                    self.WIDTH - timer_surface.get_width() - 10, self.HEIGHT - timer_surface.get_height() - 10))
 
                 # Verificar si el jugador gana
                 if not grid.win and utils.check_win(grid.get_grid(), solution, rows, cols):
@@ -330,7 +398,9 @@ class NonogramGame:
                     pygame.quit()
                     sys.exit()
                 elif event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_RETURN:  # Confirmar entrada con Enter
+                    if event.key == pygame.K_ESCAPE:  # Si se presiona ESC, regresar al menú principal
+                        return None
+                    elif event.key == pygame.K_RETURN:  # Confirmar entrada con Enter
                         if "x" in input_text:
                             parts = input_text.split("x")
                             if len(parts) == 2 and parts[0].isdigit() and parts[1].isdigit():
@@ -351,7 +421,7 @@ class NonogramGame:
                         input_text += event.unicode
                         error_message = ""  # Limpiar mensaje de error
 
-        return 5, 5  # Valor por defecto si se cancela
+        return None  # Valor por defecto si se cancela
 
     def ask_nonogram_name(self):
         """Permite al usuario ingresar un nombre para el nonograma."""
@@ -399,45 +469,49 @@ class NonogramGame:
     def create_nonogram(self):
         """Crea un nonograma personalizado permitiendo elegir el tamaño del tablero."""
         # Pedir al usuario el tamaño del tablero
-        self.ROWS, self.COLS = self.ask_board_size()
-        self.adjust_screen_size(self.ROWS, self.COLS)
+        result = self.ask_board_size()
+        if result is None:  # Si el usuario presionó ESC, salir del método
+            return
 
-        grid = Grid(self.ROWS, self.COLS, self.SQUARE_SIZE, self.TOP_MARGIN, self.LEFT_MARGIN, self.screen)
+        rows, cols = result  # Desempaquetar las dimensiones
+        self.adjust_screen_size(rows, cols)
+
+        # Inicializar un tablero vacío
+        grid = Grid(rows, cols, self.SQUARE_SIZE, self.TOP_MARGIN, self.LEFT_MARGIN, self.screen)
         editing = True
 
         while editing:
             self.screen.fill(WHITE)
-            grid.draw([], [])  # Dibuja el tablero sin pistas (se generarán después)
+            grid.draw([], [])  # Dibuja el tablero vacío
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
                 if event.type == pygame.MOUSEBUTTONDOWN:
-                    grid.handle_click(pygame.mouse.get_pos(), event.button)  # Permitir dibujo
+                    grid.handle_click(pygame.mouse.get_pos(), event.button)  # Permitir clic para dibujar
                 if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_RETURN:  # Finalizar diseño
+                    if event.key == pygame.K_RETURN:  # Finalizar creación
                         solution = grid.get_grid()
-                        row_clues, col_clues = utils.generate_clues(solution, self.ROWS, self.COLS)
-                        nonogram_name = self.ask_nonogram_name()  # Pedir el nombre del nonograma
-                        self.save_custom_nonogram(solution, self.ROWS, self.COLS, nonogram_name)
-                        editing = False  # Salir del editor
-                    elif event.key == pygame.K_ESCAPE:  # Cancelar diseño
+                        row_clues, col_clues = utils.generate_clues(solution, rows, cols)
+                        nonogram_name = self.ask_nonogram_name()  # Pedir nombre para el nonograma
+                        self.save_custom_nonogram(solution, rows, cols, nonogram_name)
+                        editing = False
+                    elif event.key == pygame.K_ESCAPE:  # Cancelar creación y regresar al menú principal
                         editing = False
 
             pygame.display.flip()
 
-    def save_custom_nonogram(self, grid, rows, cols, name):
+    def save_custom_nonogram(self, solution, rows, cols, name):
         """Guarda un nonograma personalizado con un nombre específico."""
         directory = "nonogramas_creados"
         if not os.path.exists(directory):
             os.makedirs(directory)
 
-        # Usar el nombre proporcionado
         filename = os.path.join(directory, f"{name}.pkl")
 
         data = {
-            'grid': grid,
+            'grid': solution,
             'rows': rows,
             'cols': cols,
             'elapsed_time': 0
