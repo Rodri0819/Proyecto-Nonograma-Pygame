@@ -63,3 +63,7 @@ def check_win(grid, solution, rows, cols):
             if grid[row][col] == -1 and solution[row][col] == 1:
                 return False  #Si el jugador ha marcado como incorrecta una celda que debería estar marcada
     return True  #Si no se encuentran discrepancias, el jugador ha ganado
+
+def contar_celdas_marcadas(solution):
+    #Cuenta la cantidad total de celdas marcadas en la solución.
+    return sum(sum(row) for row in solution)

@@ -28,6 +28,8 @@ class NonogramGame:
         self.win_font = WIN_FONT
         self.menu_font = MENU_FONT
 
+        self.top_scores = []
+
     @staticmethod
     def generate_solution(rows, cols):
         return [[random.choice([0, 1]) for _ in range(cols)] for _ in range(rows)]
@@ -153,7 +155,7 @@ class NonogramGame:
 
         print(f"Nonograma guardado en: {filename}")
 
-    def save_game(self, grid, rows, cols, elapsed_time, solution):
+    def save_game(self, grid, rows, cols, elapsed_time, solution, cantidadPistas):
         """Guarda el estado de la partida en un archivo usando pickle."""
         directory = "partidas_guardadas"
         if not os.path.exists(directory):
@@ -171,6 +173,7 @@ class NonogramGame:
             'cols': cols,
             'elapsed_time': elapsed_time,
             'solution': solution,  # Solución para verificar partidas cargadas
+            'cantidadPistas' : cantidadPistas,
         }
 
         with open(filepath, 'wb') as f:
@@ -193,8 +196,9 @@ class NonogramGame:
         cols = data['cols']
         elapsed_time = data.get('elapsed_time', 0)  # Asegura que tenga un valor por defecto
         solution = data.get('solution', None)
+        cantidadPistas = data.get('cantidadPistas', 0)
 
-        return grid, rows, cols, elapsed_time, solution
+        return grid, rows, cols, elapsed_time, solution, cantidadPistas
 
     def load_custom_game(self, load_filename):
         """Carga el estado de una partida personalizada desde un archivo usando pickle."""
@@ -220,19 +224,33 @@ class NonogramGame:
             row_clues, col_clues = [], []
             grid = None
             solution = None  # Inicializamos solution como None
+            cantidadPistas = 0
 
             # Mostrar menú inicial
             option = menu.show_menu(self.screen, self.WIDTH // 2, self.HEIGHT // 2)
 
             if option == "cargar_partida":
                 selected_game = menu.show_saved_games(self.screen)
+
                 if selected_game == "menu_principal":
-                    continue
+                    continue  # Regresar al menú principal
                 if selected_game:
                     game_filename = os.path.join("partidas_guardadas", selected_game)
-                    grid_data, rows, cols, elapsed_time, solution = self.load_game(game_filename)
-                    start_time = pygame.time.get_ticks() - elapsed_time * 1000
-                    grid = Grid(rows, cols, self.SQUARE_SIZE, self.TOP_MARGIN, self.LEFT_MARGIN, self.screen, grid_data)
+                    try:
+                        # Cargar datos de la partida
+                        grid_data, rows, cols, elapsed_time, solution, cantidadPistas = self.load_game(game_filename)
+                        start_time = pygame.time.get_ticks() - elapsed_time * 1000
+
+                        # Generar pistas basadas en la solución cargada
+                        row_clues, col_clues = utils.generate_clues(solution, rows, cols)
+
+                        # Crear el grid con los datos cargados
+                        grid = Grid(rows, cols, self.SQUARE_SIZE, self.TOP_MARGIN, self.LEFT_MARGIN, self.screen,
+                                    grid_data)
+                    except Exception as e:
+                        print(f"Error al cargar la partida: {e}")
+                        continue  # Regresar al menú principal
+
 
             elif option == "random":
                 rows = random.randint(5, 10)
@@ -310,7 +328,9 @@ class NonogramGame:
             self.adjust_screen_size(rows, cols)
 
             start_time = pygame.time.get_ticks()
+            paused_time = 0  # Tiempo acumulado en pausa
             running = True
+
             while running:
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT:
@@ -318,25 +338,30 @@ class NonogramGame:
                         sys.exit()
                     if event.type == pygame.KEYDOWN:
                         if event.key == pygame.K_ESCAPE:
+                            pause_start_time = pygame.time.get_ticks()  # Tiempo al pausar
                             selected_option = self.show_pause_menu(self.screen, self.WIDTH, self.HEIGHT)
+
                             if selected_option == 0:  # Reanudar
+                                paused_time += pygame.time.get_ticks() - pause_start_time  # Acumula tiempo pausado
                                 continue
                             elif selected_option == 1:  # Guardar partida
-                                self.save_game(grid.get_grid(), rows, cols, elapsed_time, solution)
+                                self.save_game(grid.get_grid(), rows, cols, elapsed_time, solution, cantidadPistas)
                             elif selected_option == 2:  # Reiniciar
-                                start_time = pygame.time.get_ticks()
+                                start_time = pygame.time.get_ticks()  # Reinicia el tiempo
+                                paused_time = 0  # Reinicia el tiempo pausado
                                 grid.reset()
                             elif selected_option == 3:  # Salir
                                 running = False
                                 break
-                        elif event.key == pygame.K_h:  # Presiona 'H' para ayuda
+                        elif event.key == pygame.K_h:  # Ayuda
                             utils.mostrar_ayuda(grid.get_grid(), solution)
+                            cantidadPistas +=1 
 
                     if not grid.win:
                         if event.type == pygame.MOUSEBUTTONDOWN:
                             grid.handle_click(pygame.mouse.get_pos(), event.button)
 
-                elapsed_time = (pygame.time.get_ticks() - start_time) // 1000
+                elapsed_time = (pygame.time.get_ticks() - start_time - paused_time) // 1000
 
                 # Formatear tiempo como HH:MM:SS
                 hours = elapsed_time // 3600
@@ -352,6 +377,37 @@ class NonogramGame:
 
                 # Verificar si el jugador gana
                 if not grid.win and utils.check_win(grid.get_grid(), solution, rows, cols):
+                    #Calcula el puntaje de la partida
+                    puntajeBase = rows+cols
+                    cantidadCeldasMarcadas = utils.contar_celdas_marcadas(solution) 
+                    puntajeTiempo = puntajeBase - (elapsed_time // 6000)
+                    puntajePistas = 0
+                    if cantidadPistas > 0:
+                        if puntajeTiempo < 0:
+                            puntajePistas = (-puntajeTiempo + cantidadPistas)*(cantidadPistas/cantidadCeldasMarcadas)
+                        elif puntajeTiempo > 0 :
+                            puntajePistas = (puntajeTiempo + cantidadPistas)*(cantidadPistas/cantidadCeldasMarcadas)
+
+                    if cantidadPistas < cantidadCeldasMarcadas :
+                        puntajeTotal = puntajeBase + puntajeTiempo - puntajePistas
+                    else :
+                        puntajeTotal = 0     
+
+                    # Llamamos a la función del menú para agregar el puntaje
+                    menu.agregar_puntaje(puntajeTotal) 
+                    
+                    # Mostrar el puntaje en pantalla, en el mismo estilo que el tiempo
+                    puntaje_texto = f"Puntaje: {int(puntajeTotal)}"  # Convertir el puntaje a entero
+                    puntaje_surface = FONT.render(puntaje_texto, True, BLACK)  # Usamos la misma fuente
+
+                     # Posicionar el puntaje en el centro de la parte inferior
+                    puntaje_x = self.WIDTH // 2 - puntaje_surface.get_width() // 2  # Centrar el texto horizontalmente
+                    puntaje_y = self.HEIGHT - puntaje_surface.get_height() - 10  # Colocar el puntaje justo encima del borde inferior
+
+
+                    self.screen.blit(puntaje_surface, (puntaje_x, puntaje_y))  # Dibujar el puntaje en pantalla
+
+                    #Guarda una screenshot de la partida al ganar
                     now = datetime.datetime.now()
                     timestamp = now.strftime("%Y%m%d_%H%M%S")
                     screenshot_filename = f"nonograma_ganado_{timestamp}.png"
@@ -364,10 +420,13 @@ class NonogramGame:
                     pygame.image.save(screenshot_surface, filepath)
                     grid.display_win_message(self.WIDTH, self.HEIGHT)
                     pygame.display.flip()
-                    pygame.time.delay(2000)
+                    pygame.time.delay(5000)
                     running = False
 
                 pygame.display.flip()
+
+
+
 
     def ask_board_size(self):
         """Permite al usuario ingresar el tamaño del tablero en formato NxM."""
