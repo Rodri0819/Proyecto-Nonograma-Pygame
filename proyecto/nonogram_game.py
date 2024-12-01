@@ -41,53 +41,6 @@ class NonogramGame:
         self.HEIGHT = 50 + self.TOP_MARGIN + rows * self.SQUARE_SIZE
         self.screen = pygame.display.set_mode((self.WIDTH, self.HEIGHT))
 
-    def run_tutorial(self):
-        instructions = [
-            "",
-            "",
-            "1. Las Reglas Básicas del Nonograma:",
-            "Debes llenar celdas en una cuadrícula basándote en los números que aparecen en los bordes.",
-            "Los números indican cuántas celdas consecutivas debes llenar en cada fila o columna.",
-            "",
-            "2. Cómo Interpretar Múltiples Números en una Fila o Columna:",
-            "Si hay N cantidad de números, significa que hay N grupos de celdas correctas",
-            "y al menos una celda vacía entre cada grupo.",
-            "",
-            "3. Cómo Empezar:",
-            "Comienza con filas o columnas donde los números",
-            "llenan completamente la cuadrícula o casi lo hacen.",
-            "",
-            "4. Marcar las Celdas Vacías:",
-            "Usa el Clic derecho para marcar celdas que no son correctas.",
-            "",
-            "5. Completa el Nonograma:",
-            "Sigue deduciendo hasta completar la imagen oculta.",
-            "¡Buena suerte!"
-        ]
-
-        # Limpiar pantalla y mostrar fondo blanco
-        self.screen.fill(WHITE)
-
-        # Mostrar cada línea de instrucciones centrada en pantalla
-        for i, line in enumerate(instructions):
-            instruction_surface = FONT.render(line, True, BLACK)
-            self.screen.blit(
-                instruction_surface,
-                (self.WIDTH // 2 - instruction_surface.get_width() // 2, 20 + i * 25)
-            )
-
-        pygame.display.flip()
-
-        # Esperar a que el jugador presione una tecla para salir de las instrucciones
-        waiting = True
-        while waiting:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    sys.Salir()
-                elif event.type == pygame.KEYDOWN:
-                    waiting = False  # Salir de las instrucciones al presionar cualquier tecla
-
     def show_pause_menu(self, screen, width, height):
         options = ["Reanudar", "Guardar partida", "Reiniciar", "Salir"]
         TEXT_COLOR = BLACK
@@ -133,7 +86,6 @@ class NonogramGame:
                         for i, rect in enumerate(option_rects):
                             if rect.collidepoint(event.pos):  # Verificar si el clic fue en el texto
                                 return i  # Retornar el índice de la opción seleccionada
-
 
     def save_custom_nonogram(self, grid, rows, cols):
         directory = "nonogramas_creados"
@@ -425,9 +377,6 @@ class NonogramGame:
 
                 pygame.display.flip()
 
-
-
-
     def ask_board_size(self):
         """Permite al usuario ingresar el tamaño del tablero en formato NxM."""
         running = True
@@ -579,3 +528,131 @@ class NonogramGame:
             pickle.dump(data, f)
 
         print(f"Nonograma guardado en: {filename}")
+
+    def run_tutorial(self):
+        # Limpiar pantalla y mostrar fondo blanco
+        self.screen.fill(WHITE)
+
+        instructions = [
+            "1. Las Reglas Básicas del Nonograma",
+            "  - Debes llenar celdas en una cuadrícula basándote en los números que aparecen en los bordes.",
+            "  - Los números indican cuántas celdas consecutivas debes llenar en cada fila o columna.",
+            "  - Si hay N cantidad de números, significa que hay N grupos de celdas correctas",
+            "    y al menos una celda vacía entre cada grupo.",
+            "2. Controles del Juego:",
+            "  - Click izquierdo: Marcar celda correcta",
+            "  - Click derecho: Marcar celda incorrecta",
+            "  - Tecla H: Ayuda aleatoria"
+        ]
+        paso1 = [
+            "Comienza por las",
+            "filas o columnas completas."
+        ]
+        paso2 = [
+            "Recuerda las reglas, ",
+            "úsalas para completar las ",
+            "filas o columnas casi llenas"
+        ]
+        paso3 = [
+            "Sigue deduciendo hasta",
+            "completar la imagen."
+        ]
+        # Mostrar cada línea de instrucciones
+        for i, line in enumerate(instructions):
+            instruction_surface = FONT.render(line, True, BLACK)
+            self.screen.blit(instruction_surface,(20, 20 + i * 25))
+
+        for i, line in enumerate(paso1):
+            paso1_surface = FONT.render(line, True, BLACK)
+            self.screen.blit(paso1_surface,(30, 300 + i * 25))
+
+        for i, line in enumerate(paso2):
+            paso2_surface = FONT.render(line, True, BLACK)
+            self.screen.blit(paso2_surface,(295, 275 + i * 25))
+
+        for i, line in enumerate(paso3):
+            paso3_surface = FONT.render(line, True, BLACK)
+            self.screen.blit(paso3_surface,(575, 550 + i * 25))
+
+        # Configuración de la cuadrícula
+        left_margin_1 = 50
+        left_margin_2 = 325
+        left_margin_3 = 600
+        top_margin_1 = 170
+        top_margin_2 = 400
+
+        rows, cols = 5, 5
+        row_clues = [[2, 1], [1, 1, 1], [2], [3], [3, 1]]
+        col_clues = [[1, 1], [1, 1], [2, 2], [2], [5]]
+
+        grid2 = [[0, 0, 0, 0, 1], [0, 0, 0, 0, 1], [0, 0, 0, 0, 1], [0, 0, 0, 0, 1], [0, 0, 0, 0, 1]]
+        grid3 = [[0, 0, 1, 0, 1], [1, 0, 1, 0, 1], [0, 0, 0, 0, 1], [0, 0, 1, 0, 1], [1, 1, 1, 0, 1]]
+        grid4 = [[0, 1, 1, 0, 1], [1, 0, 1, 0, 1], [0, 0, 0, 1, 1], [0, 0, 1, 1, 1], [1, 1, 1, 0, 1]]
+
+        # Dibujar las pistas para las filas
+        for i, clues in enumerate(row_clues):
+            text = ' '.join(map(str, clues))
+            clue_surface = FONT.render(text, True, BLACK)
+            self.screen.blit(clue_surface, (left_margin_3 - 40, top_margin_1 + i * SQUARE_SIZE))
+            self.screen.blit(clue_surface, (left_margin_1 - 40, top_margin_2 + i * SQUARE_SIZE))
+            self.screen.blit(clue_surface, (left_margin_2 - 40, top_margin_2 + i * SQUARE_SIZE))
+            self.screen.blit(clue_surface, (left_margin_3 - 40, top_margin_2 + i * SQUARE_SIZE))
+
+        # Dibujar las pistas para las columnas
+        for i, clues in enumerate(col_clues):
+            for j, clue in enumerate(clues):
+                clue_surface = FONT.render(str(clue), True, BLACK)
+                self.screen.blit(clue_surface,(left_margin_3 + i * SQUARE_SIZE + SQUARE_SIZE / 2 - 5, top_margin_1 - 45 + j * 15))
+                self.screen.blit(clue_surface,(left_margin_1 + i * SQUARE_SIZE + SQUARE_SIZE / 2 - 5, top_margin_2 - 45 + j * 15))
+                self.screen.blit(clue_surface,(left_margin_2 + i * SQUARE_SIZE + SQUARE_SIZE / 2 - 5, top_margin_2 - 45 + j * 15))
+                self.screen.blit(clue_surface,(left_margin_3 + i * SQUARE_SIZE + SQUARE_SIZE / 2 - 5, top_margin_2 - 45 + j * 15))
+
+        # Dibujar las cuadrículas vacías
+        for row in range(rows):
+            for col in range(cols):
+                rect1 = pygame.Rect(
+                    left_margin_3 + col * SQUARE_SIZE,
+                    top_margin_1 + row * SQUARE_SIZE,
+                    SQUARE_SIZE,
+                    SQUARE_SIZE
+                )
+                rect2 = pygame.Rect(
+                    left_margin_1 + col * SQUARE_SIZE,
+                    top_margin_2 + row * SQUARE_SIZE,
+                    SQUARE_SIZE,
+                    SQUARE_SIZE
+                )
+                rect3 = pygame.Rect(
+                    left_margin_2 + col * SQUARE_SIZE,
+                    top_margin_2 + row * SQUARE_SIZE,
+                    SQUARE_SIZE,
+                    SQUARE_SIZE
+                )
+                rect4 = pygame.Rect(
+                    left_margin_3 + col * SQUARE_SIZE,
+                    top_margin_2 + row * SQUARE_SIZE,
+                    SQUARE_SIZE,
+                    SQUARE_SIZE
+                )
+                pygame.draw.rect(self.screen, BLACK, rect1, 1)
+                if grid2[row][col] == 1:
+                    pygame.draw.rect(self.screen, GRAY, rect2)  # Rellena la celda con color gris
+                pygame.draw.rect(self.screen, BLACK, rect2, 1)
+                if grid3[row][col] == 1:
+                    pygame.draw.rect(self.screen, GRAY, rect3)  # Rellena la celda con color gris
+                pygame.draw.rect(self.screen, BLACK, rect3, 1)
+                if grid4[row][col] == 1:
+                    pygame.draw.rect(self.screen, GRAY, rect4)  # Rellena la celda con color gris
+                pygame.draw.rect(self.screen, BLACK, rect4, 1)
+
+        pygame.display.flip()
+
+        # Esperar a que el jugador presione una tecla para salir de las instrucciones
+        waiting = True
+        while waiting:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                elif event.type == pygame.KEYDOWN:
+                    waiting = False  # Salir de las instrucciones al presionar cualquier tecla
