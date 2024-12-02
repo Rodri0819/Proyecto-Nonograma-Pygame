@@ -4,9 +4,12 @@ import pygame
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 GRAY = (128, 128, 128)
+DARK_GRAY = (200, 200, 200)
 BLUE = (90, 140, 255)
 GREEN = (0, 255, 0)
 RED = (255, 0, 0)
+CHERRY = (200, 0, 0)
+DARK_RED = (150, 0, 0)
 
 # Tamaño de cuadrícula por defecto
 DEFAULT_ROWS = 5

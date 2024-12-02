@@ -43,36 +43,44 @@ class NonogramGame:
 
     def show_pause_menu(self, screen, width, height):
         options = ["Reanudar", "Guardar partida", "Reiniciar", "Salir"]
-        TEXT_COLOR = BLACK
-        HOVER_TEXT_COLOR = (150, 150, 150)  # Color de las letras al pasar el mouse por encima
+        button_width = 150
+        button_height = 30
+        spacing = 10  # Espacio entre botones
 
         while True:
             screen.fill(WHITE)  # Rellena la pantalla con blanco
 
             # Obtener la posición actual del mouse
-            mouse_pos = pygame.mouse.get_pos()
+            mouse_x, mouse_y = pygame.mouse.get_pos()
 
-            # Lista para guardar los rectángulos de las opciones
-            option_rects = []
-
-            # Dibujar opciones
+            # Dibujar botones
+            button_rects = []
             for i, option in enumerate(options):
-                # Definir posición del texto
-                text_x = width // 2
-                text_y = height // 2 - 80 + i * 60
+                # Posición del botón
+                button_x = width // 2 - button_width // 2
+                button_y = height // 2 - (len(options) * (button_height + spacing)) // 2 + i * (button_height + spacing)
+
+                # Detectar si el cursor está sobre el botón
+                is_hovered = button_x <= mouse_x <= button_x + button_width and \
+                             button_y <= mouse_y <= button_y + button_height
+
+                # Establecer colores
+                if option == "Salir":
+                    button_color = DARK_RED if is_hovered else CHERRY
+                else:
+                    button_color = GRAY if is_hovered else DARK_GRAY
+
+                # Dibujar botón
+                pygame.draw.rect(screen, button_color, (button_x, button_y, button_width, button_height))
+                pygame.draw.rect(screen, BLACK, (button_x, button_y, button_width, button_height), 2)  # Borde negro
 
                 # Renderizar texto
-                if pygame.Rect(text_x - 100, text_y - 20, 200, 40).collidepoint(mouse_pos):
-                    text_surface = FONT.render(option, True, HOVER_TEXT_COLOR)  # Color de hover
-                else:
-                    text_surface = FONT.render(option, True, TEXT_COLOR)  # Color normal
-
-                # Centrar texto
-                text_rect = text_surface.get_rect(center=(text_x, text_y))
+                text_surface = FONT.render(option, True, WHITE if is_hovered else BLACK)
+                text_rect = text_surface.get_rect(center=(button_x + button_width // 2, button_y + button_height // 2))
                 screen.blit(text_surface, text_rect)
 
-                # Guardar el rectángulo del texto para manejar clics
-                option_rects.append(text_rect)
+                # Guardar rectángulo del botón
+                button_rects.append((button_x, button_y, button_width, button_height, i))  # i es el índice de la opción
 
             pygame.display.flip()  # Actualizar pantalla
 
@@ -83,9 +91,10 @@ class NonogramGame:
                     sys.exit()
                 if event.type == pygame.MOUSEBUTTONDOWN:  # Detectar clic
                     if event.button == 1:  # Solo manejar clic izquierdo
-                        for i, rect in enumerate(option_rects):
-                            if rect.collidepoint(event.pos):  # Verificar si el clic fue en el texto
-                                return i  # Retornar el índice de la opción seleccionada
+                        for button_x, button_y, button_width, button_height, index in button_rects:
+                            if button_x <= event.pos[0] <= button_x + button_width and \
+                                    button_y <= event.pos[1] <= button_y + button_height:
+                                return index  # Retornar el índice de la opción seleccionada
 
     def save_custom_nonogram(self, grid, rows, cols):
         directory = "nonogramas_creados"
@@ -247,23 +256,6 @@ class NonogramGame:
                 else:
                     print("Error: No se pudo cargar el juego personalizado.")
 
-                    # Comenzar a jugar el tablero personalizado
-                    playing = True
-                    while playing:
-                        for event in pygame.event.get():
-                            if event.type == pygame.QUIT:
-                                pygame.quit()
-                                sys.exit()
-                            if event.type == pygame.KEYDOWN:
-                                if event.key == pygame.K_ESCAPE:
-                                    playing = False  # Salir del tablero personalizado y volver al menú principal
-                            if event.type == pygame.MOUSEBUTTONDOWN:
-                                grid.handle_click(pygame.mouse.get_pos(), event.button)
-
-                        # Dibujar el tablero y manejar el juego
-                        self.screen.fill(WHITE)
-                        grid.draw(row_clues, col_clues)
-                        pygame.display.flip()
             else:
                 pygame.quit()
                 sys.exit()
@@ -283,12 +275,38 @@ class NonogramGame:
             running = True
 
             while running:
+                # Dibujar botones para "Menu" y "Ayuda"
+                button_size = 30
+
+                # Botón de menú
+                menu_button_x = self.WIDTH - 40
+                menu_button_y = 50
+                menu_button_rect = pygame.Rect(menu_button_x, menu_button_y, button_size, button_size)
+
+                # Botón de ayuda
+                help_button_x =  self.WIDTH - 40
+                help_button_y =  90
+                help_button_rect = pygame.Rect(help_button_x, help_button_y, button_size, button_size)
+
+                # Dibujar botones
+                pygame.draw.rect(self.screen, DARK_GRAY, menu_button_rect)  # Botón gris para menú
+                pygame.draw.rect(self.screen, BLACK, menu_button_rect, 2)  # Borde negro
+                pygame.draw.rect(self.screen, DARK_GRAY, help_button_rect)  # Botón gris para ayuda
+                pygame.draw.rect(self.screen, BLACK, help_button_rect, 2)  # Borde negro
+
+                # Agregar texto a los botones
+                menu_text = FONT.render("M", True, BLACK)  # "M" para menú
+                help_text = FONT.render("?", True, BLACK)  # "?" para ayuda
+                self.screen.blit(menu_text, (menu_button_x + (button_size - menu_text.get_width()) // 2, menu_button_y + (button_size - menu_text.get_height()) // 2))
+                self.screen.blit(help_text, (help_button_x + (button_size - help_text.get_width()) // 2, help_button_y + (button_size - help_text.get_height()) // 2))
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT:
                         pygame.quit()
                         sys.exit()
-                    if event.type == pygame.KEYDOWN:
-                        if event.key == pygame.K_ESCAPE:
+
+                    if event.type == pygame.MOUSEBUTTONDOWN:
+                        # Detectar clic en el botón de menú
+                        if menu_button_rect.collidepoint(event.pos):
                             pause_start_time = pygame.time.get_ticks()  # Tiempo al pausar
                             selected_option = self.show_pause_menu(self.screen, self.WIDTH, self.HEIGHT)
 
@@ -304,13 +322,18 @@ class NonogramGame:
                             elif selected_option == 3:  # Salir
                                 running = False
                                 break
-                        elif event.key == pygame.K_h:  # Ayuda
+
+                        # Detectar clic en el botón de ayuda
+                        if help_button_rect.collidepoint(event.pos):
                             utils.mostrar_ayuda(grid.get_grid(), solution)
-                            cantidadPistas +=1 
+                            cantidadPistas += 1
 
                     if not grid.win:
                         if event.type == pygame.MOUSEBUTTONDOWN:
                             grid.handle_click(pygame.mouse.get_pos(), event.button)
+
+                # Actualizar pantalla
+                pygame.display.flip()
 
                 elapsed_time = (pygame.time.get_ticks() - start_time - paused_time) // 1000
 
@@ -351,8 +374,7 @@ class NonogramGame:
                     puntaje_texto = f"Puntaje: {int(puntajeTotal)}"  # Convertir el puntaje a entero
                     puntaje_surface = FONT.render(puntaje_texto, True, BLACK)  # Usamos la misma fuente
 
-                     # Posicionar el puntaje en el centro de la parte inferior
-                    puntaje_x = self.WIDTH // 2 - puntaje_surface.get_width() // 2  # Centrar el texto horizontalmente
+                    puntaje_x = 20  # Borde izquierdo
                     puntaje_y = self.HEIGHT - puntaje_surface.get_height() - 10  # Colocar el puntaje justo encima del borde inferior
 
 
@@ -374,8 +396,6 @@ class NonogramGame:
                     pygame.time.delay(5000)
                     running = False
 
-                pygame.display.flip()
-
     def ask_nonogram_name(self):
         """Permite al usuario ingresar un nombre para el nonograma."""
         running = True
@@ -386,16 +406,16 @@ class NonogramGame:
             self.screen.fill(WHITE)
 
             # Mensajes en pantalla
-            title_surface = FONT.render("Ingrese un nombre para el nonograma:", True, BLACK)
+            title_surface = FONT.render("Nombre para el nonograma:", True, BLACK)
             self.screen.blit(title_surface, (self.WIDTH // 2 - title_surface.get_width() // 2, 100))
 
             # Mostrar el texto ingresado por el usuario
             input_surface = FONT.render(input_text, True, BLACK)
-            self.screen.blit(input_surface, (self.WIDTH // 2 - input_surface.get_width() // 2, 200))
+            self.screen.blit(input_surface, (self.WIDTH // 2 - input_surface.get_width() // 2, 150))
 
             # Mostrar mensaje de error si existe
             if error_message:
-                error_surface = FONT.render(error_message, True, (255, 0, 0))  # Color rojo para errores
+                error_surface = FONT.render(error_message, True, RED)  # Color rojo para errores
                 self.screen.blit(error_surface, (self.WIDTH // 2 - error_surface.get_width() // 2, 300))
 
             pygame.display.flip()
@@ -480,7 +500,7 @@ class NonogramGame:
 
         instructions = [
             "1. Las Reglas Básicas del Nonograma",
-            "  - Debes llenar celdas en una cuadrícula basándote en los números que aparecen en los bordes.",
+            "  - Debes marcar las celdas basándote en los números que aparecen en los bordes.",
             "  - Los números indican cuántas celdas consecutivas debes llenar en cada fila o columna.",
             "  - Si hay N cantidad de números, significa que hay N grupos de celdas correctas",
             "    y al menos una celda vacía entre cada grupo.",
@@ -502,29 +522,6 @@ class NonogramGame:
             "Sigue deduciendo hasta",
             "completar la imagen."
         ]
-        # Mostrar cada línea de instrucciones
-        for i, line in enumerate(instructions):
-            instruction_surface = FONT.render(line, True, BLACK)
-            self.screen.blit(instruction_surface,(20, 20 + i * 25))
-
-        for i, line in enumerate(paso1):
-            paso1_surface = FONT.render(line, True, BLACK)
-            self.screen.blit(paso1_surface,(30, 300 + i * 25))
-
-        for i, line in enumerate(paso2):
-            paso2_surface = FONT.render(line, True, BLACK)
-            self.screen.blit(paso2_surface,(295, 275 + i * 25))
-
-        for i, line in enumerate(paso3):
-            paso3_surface = FONT.render(line, True, BLACK)
-            self.screen.blit(paso3_surface,(575, 550 + i * 25))
-
-        # Configuración de la cuadrícula
-        left_margin_1 = 50
-        left_margin_2 = 325
-        left_margin_3 = 600
-        top_margin_1 = 170
-        top_margin_2 = 400
 
         rows, cols = 5, 5
         row_clues = [[2, 1], [1, 1, 1], [2], [3], [3, 1]]
@@ -534,70 +531,94 @@ class NonogramGame:
         grid3 = [[0, 0, 1, 0, 1], [1, 0, 1, 0, 1], [0, 0, 0, 0, 1], [0, 0, 1, 0, 1], [1, 1, 1, 0, 1]]
         grid4 = [[0, 1, 1, 0, 1], [1, 0, 1, 0, 1], [0, 0, 0, 1, 1], [0, 0, 1, 1, 1], [1, 1, 1, 0, 1]]
 
-        # Dibujar las pistas para las filas
-        for i, clues in enumerate(row_clues):
-            text = ' '.join(map(str, clues))
-            clue_surface = FONT.render(text, True, BLACK)
-            self.screen.blit(clue_surface, (left_margin_3 - 40, top_margin_1 + i * SQUARE_SIZE))
-            self.screen.blit(clue_surface, (left_margin_1 - 40, top_margin_2 + i * SQUARE_SIZE))
-            self.screen.blit(clue_surface, (left_margin_2 - 40, top_margin_2 + i * SQUARE_SIZE))
-            self.screen.blit(clue_surface, (left_margin_3 - 40, top_margin_2 + i * SQUARE_SIZE))
-
-        # Dibujar las pistas para las columnas
-        for i, clues in enumerate(col_clues):
-            for j, clue in enumerate(clues):
-                clue_surface = FONT.render(str(clue), True, BLACK)
-                self.screen.blit(clue_surface,(left_margin_3 + i * SQUARE_SIZE + SQUARE_SIZE / 2 - 5, top_margin_1 - 45 + j * 15))
-                self.screen.blit(clue_surface,(left_margin_1 + i * SQUARE_SIZE + SQUARE_SIZE / 2 - 5, top_margin_2 - 45 + j * 15))
-                self.screen.blit(clue_surface,(left_margin_2 + i * SQUARE_SIZE + SQUARE_SIZE / 2 - 5, top_margin_2 - 45 + j * 15))
-                self.screen.blit(clue_surface,(left_margin_3 + i * SQUARE_SIZE + SQUARE_SIZE / 2 - 5, top_margin_2 - 45 + j * 15))
-
-        # Dibujar las cuadrículas vacías
-        for row in range(rows):
-            for col in range(cols):
-                rect1 = pygame.Rect(
-                    left_margin_3 + col * SQUARE_SIZE,
-                    top_margin_1 + row * SQUARE_SIZE,
-                    SQUARE_SIZE,
-                    SQUARE_SIZE
-                )
-                rect2 = pygame.Rect(
-                    left_margin_1 + col * SQUARE_SIZE,
-                    top_margin_2 + row * SQUARE_SIZE,
-                    SQUARE_SIZE,
-                    SQUARE_SIZE
-                )
-                rect3 = pygame.Rect(
-                    left_margin_2 + col * SQUARE_SIZE,
-                    top_margin_2 + row * SQUARE_SIZE,
-                    SQUARE_SIZE,
-                    SQUARE_SIZE
-                )
-                rect4 = pygame.Rect(
-                    left_margin_3 + col * SQUARE_SIZE,
-                    top_margin_2 + row * SQUARE_SIZE,
-                    SQUARE_SIZE,
-                    SQUARE_SIZE
-                )
-                pygame.draw.rect(self.screen, BLACK, rect1, 1)
-                if grid2[row][col] == 1:
-                    pygame.draw.rect(self.screen, GRAY, rect2)  # Rellena la celda con color gris
-                pygame.draw.rect(self.screen, BLACK, rect2, 1)
-                if grid3[row][col] == 1:
-                    pygame.draw.rect(self.screen, GRAY, rect3)  # Rellena la celda con color gris
-                pygame.draw.rect(self.screen, BLACK, rect3, 1)
-                if grid4[row][col] == 1:
-                    pygame.draw.rect(self.screen, GRAY, rect4)  # Rellena la celda con color gris
-                pygame.draw.rect(self.screen, BLACK, rect4, 1)
-
-        pygame.display.flip()
-
-        # Esperar a que el jugador presione una tecla para salir de las instrucciones
         waiting = True
         while waiting:
+            self.screen.fill(WHITE)
+
+            # Dibujar instrucciones
+            for i, line in enumerate(instructions):
+                instruction_surface = FONT.render(line, True, BLACK)
+                self.screen.blit(instruction_surface, (20, 20 + i * 25))
+
+            for i, line in enumerate(paso1):
+                paso1_surface = FONT.render(line, True, BLACK)
+                self.screen.blit(paso1_surface, (30, 300 + i * 25))
+
+            for i, line in enumerate(paso2):
+                paso2_surface = FONT.render(line, True, BLACK)
+                self.screen.blit(paso2_surface, (295, 275 + i * 25))
+
+            for i, line in enumerate(paso3):
+                paso3_surface = FONT.render(line, True, BLACK)
+                self.screen.blit(paso3_surface, (575, 550 + i * 25))
+
+            # Dibujar pistas y cuadrículas
+            left_margin_1 = 50
+            left_margin_2 = 325
+            left_margin_3 = 600
+            top_margin_1 = 170
+            top_margin_2 = 400
+
+            for i, clues in enumerate(row_clues):
+                text = ' '.join(map(str, clues))
+                clue_surface = FONT.render(text, True, BLACK)
+                self.screen.blit(clue_surface, (left_margin_3 - 40, top_margin_1 + i * SQUARE_SIZE))
+                self.screen.blit(clue_surface, (left_margin_1 - 40, top_margin_2 + i * SQUARE_SIZE))
+                self.screen.blit(clue_surface, (left_margin_2 - 40, top_margin_2 + i * SQUARE_SIZE))
+                self.screen.blit(clue_surface, (left_margin_3 - 40, top_margin_2 + i * SQUARE_SIZE))
+
+            for i, clues in enumerate(col_clues):
+                for j, clue in enumerate(clues):
+                    clue_surface = FONT.render(str(clue), True, BLACK)
+                    self.screen.blit(clue_surface, (
+                    left_margin_3 + i * SQUARE_SIZE + SQUARE_SIZE / 2 - 5, top_margin_1 - 45 + j * 15))
+                    self.screen.blit(clue_surface, (
+                    left_margin_1 + i * SQUARE_SIZE + SQUARE_SIZE / 2 - 5, top_margin_2 - 45 + j * 15))
+                    self.screen.blit(clue_surface, (
+                    left_margin_2 + i * SQUARE_SIZE + SQUARE_SIZE / 2 - 5, top_margin_2 - 45 + j * 15))
+                    self.screen.blit(clue_surface, (
+                    left_margin_3 + i * SQUARE_SIZE + SQUARE_SIZE / 2 - 5, top_margin_2 - 45 + j * 15))
+
+            for row in range(rows):
+                for col in range(cols):
+                    rect1 = pygame.Rect(left_margin_3 + col * SQUARE_SIZE, top_margin_1 + row * SQUARE_SIZE,
+                                        SQUARE_SIZE, SQUARE_SIZE)
+                    rect2 = pygame.Rect(left_margin_1 + col * SQUARE_SIZE, top_margin_2 + row * SQUARE_SIZE,
+                                        SQUARE_SIZE, SQUARE_SIZE)
+                    rect3 = pygame.Rect(left_margin_2 + col * SQUARE_SIZE, top_margin_2 + row * SQUARE_SIZE,
+                                        SQUARE_SIZE, SQUARE_SIZE)
+                    rect4 = pygame.Rect(left_margin_3 + col * SQUARE_SIZE, top_margin_2 + row * SQUARE_SIZE,
+                                        SQUARE_SIZE, SQUARE_SIZE)
+                    pygame.draw.rect(self.screen, BLACK, rect1, 1)
+                    if grid2[row][col] == 1:
+                        pygame.draw.rect(self.screen, GRAY, rect2)
+                    pygame.draw.rect(self.screen, BLACK, rect2, 1)
+                    if grid3[row][col] == 1:
+                        pygame.draw.rect(self.screen, GRAY, rect3)
+                    pygame.draw.rect(self.screen, BLACK, rect3, 1)
+                    if grid4[row][col] == 1:
+                        pygame.draw.rect(self.screen, GRAY, rect4)
+                    pygame.draw.rect(self.screen, BLACK, rect4, 1)
+
+            # Dibujar el botón "Volver"
+            button_size = 50
+            button_x = self.WIDTH - button_size - 10
+            button_y = 10
+            mouse_x, mouse_y = pygame.mouse.get_pos()
+            is_hovered = button_x <= mouse_x <= button_x + button_size and button_y <= mouse_y <= button_y + button_size
+            button_color = DARK_RED if is_hovered else CHERRY
+            pygame.draw.rect(self.screen, BLACK, (button_x - 3, button_y - 3, button_size + 6, button_size + 6))
+            pygame.draw.rect(self.screen, button_color, (button_x, button_y, button_size, button_size))
+            button_text = FONT.render("Volver", True, WHITE)
+            self.screen.blit(button_text, (button_x + (button_size - button_text.get_width()) // 2,
+                                           button_y + (button_size - button_text.get_height()) // 2))
+
+            pygame.display.flip()
+
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
-                elif event.type == pygame.KEYDOWN:
-                    waiting = False  # Salir de las instrucciones al presionar cualquier tecla
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    if is_hovered:
+                        waiting = False

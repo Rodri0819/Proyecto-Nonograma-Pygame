@@ -142,7 +142,7 @@ def get_board_size(screen, width, height):
         input_surface = FONT.render(user_text, True, BLACK)
         # Renderiza el mensaje de error si existe
         if error_message:
-            error_surface = FONT.render(error_message, True, (255, 0, 0))  # Texto en rojo
+            error_surface = FONT.render(error_message, True, RED)  # Texto en rojo
 
         # Posiciona los textos en la pantalla
         screen.blit(prompt_surface, (width // 2 - prompt_surface.get_width() // 2, 100))
@@ -160,7 +160,7 @@ def get_board_size(screen, width, height):
         is_hovered_back = back_button_x <= mouse_x <= back_button_x + button_size and \
                           back_button_y <= mouse_y <= back_button_y + button_size
 
-        back_button_color = (150, 0, 0) if is_hovered_back else (200, 0, 0)
+        back_button_color = DARK_RED if is_hovered_back else CHERRY
 
         # Dibujar el borde negro del botón "Volver"
         pygame.draw.rect(screen, BLACK, (back_button_x - 3, back_button_y - 3,
@@ -262,7 +262,7 @@ def show_saved_games(screen):
                 is_hovered = button_x <= mouse_x <= button_x + button_width and button_y <= mouse_y <= button_y + button_height
 
                 # Cambiar el color del botón si está siendo "hovered"
-                button_color = (150, 150, 150) if is_hovered else (200, 200, 200)
+                button_color = GRAY if is_hovered else DARK_GRAY
 
                 # Dibujar el botón
                 pygame.draw.rect(screen, button_color, (button_x, button_y, button_width, button_height))
@@ -289,7 +289,7 @@ def show_saved_games(screen):
         is_hovered_back = button_x <= mouse_x <= button_x + button_size and button_y <= mouse_y <= button_y + button_size
 
         # Cambiar el color del botón si está siendo "hovered"
-        button_color_back = (150, 0, 0) if is_hovered_back else (200, 0, 0)
+        button_color_back = DARK_RED if is_hovered_back else CHERRY
 
         # Dibujar el borde negro del botón "Volver"
         border_thickness = 3
@@ -362,7 +362,7 @@ def show_created_games(screen):
                 is_hovered = button_x <= mouse_x <= button_x + button_width and button_y <= mouse_y <= button_y + button_height
 
                 # Cambiar el color del botón si está siendo "hovered"
-                button_color = (150, 150, 150) if is_hovered else (200, 200, 200)
+                button_color = GRAY if is_hovered else DARK_GRAY
 
                 # Dibujar el botón
                 pygame.draw.rect(screen, button_color, (button_x, button_y, button_width, button_height))
