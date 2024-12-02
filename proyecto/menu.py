@@ -127,13 +127,12 @@ def mostrar_top_scores(screen, width, height):
             score_surface = FONT.render(score_text, True, BLACK)  # Usamos la misma fuente
             screen.blit(score_surface, (x_offset, y_offset + i * 30))  # Dibujar cada puntaje
 
-
 # Función que permite al jugador ingresar el tamaño del tablero
 def get_board_size(screen, width, height):
     input_active = True  # Mantener el bucle de entrada activo
     user_text = ''  # Variable para almacenar el texto ingresado por el usuario
+    error_message = ""  # Mensaje de error para entrada inválida
 
-    # Bucle para capturar la entrada del usuario
     while input_active:
         screen.fill(WHITE)  # Rellena la pantalla con el color blanco
 
@@ -141,31 +140,88 @@ def get_board_size(screen, width, height):
         prompt_surface = FONT.render("Ingrese el tamaño del tablero (ejemplo: 5x5):", True, BLACK)
         # Renderiza el texto ingresado por el usuario
         input_surface = FONT.render(user_text, True, BLACK)
+        # Renderiza el mensaje de error si existe
+        if error_message:
+            error_surface = FONT.render(error_message, True, (255, 0, 0))  # Texto en rojo
 
-        # Posiciona ambos textos en el centro
-        screen.blit(prompt_surface, (width // 2 - prompt_surface.get_width() // 2, height // 2 - 50))
-        screen.blit(input_surface, (width // 2 - input_surface.get_width() // 2, height // 2))
+        # Posiciona los textos en la pantalla
+        screen.blit(prompt_surface, (width // 2 - prompt_surface.get_width() // 2, 100))
+        screen.blit(input_surface, (width // 2 - input_surface.get_width() // 2, 150))
+        if error_message:
+            screen.blit(error_surface, (width // 2 - error_surface.get_width() // 2, height // 2 + 50))
 
-        # Actualiza la pantalla para que se muestren los cambios
-        pygame.display.flip()
+        # Dibujar botón "Volver" en la esquina superior derecha
+        button_size = 50
+        back_button_x = width - button_size - 10
+        back_button_y = 10
 
-        # Captura los eventos del usuario
+        # Detectar si el cursor está sobre el botón "Volver"
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+        is_hovered_back = back_button_x <= mouse_x <= back_button_x + button_size and \
+                          back_button_y <= mouse_y <= back_button_y + button_size
+
+        back_button_color = (150, 0, 0) if is_hovered_back else (200, 0, 0)
+
+        # Dibujar el borde negro del botón "Volver"
+        pygame.draw.rect(screen, BLACK, (back_button_x - 3, back_button_y - 3,
+                                         button_size + 6, button_size + 6))
+        pygame.draw.rect(screen, back_button_color, (back_button_x, back_button_y, button_size, button_size))
+        back_button_text = FONT.render("Volver", True, WHITE)
+        screen.blit(back_button_text, (back_button_x + (button_size - back_button_text.get_width()) // 2,
+                                       back_button_y + (button_size - back_button_text.get_height()) // 2))
+
+        # Dibujar botón "Confirmar" (Enter) debajo del input
+        confirm_button_x = width // 2 - 150
+        confirm_button_y = 300
+        confirm_button_width = 300
+        confirm_button_height = 50
+        is_hovered_confirm = confirm_button_x <= mouse_x <= confirm_button_x + confirm_button_width and \
+                             confirm_button_y <= mouse_y <= confirm_button_y + confirm_button_height
+
+        confirm_button_color = (0, 150, 0) if is_hovered_confirm else (0, 200, 0)
+        pygame.draw.rect(screen, confirm_button_color, (confirm_button_x, confirm_button_y,
+                                                        confirm_button_width, confirm_button_height))
+        pygame.draw.rect(screen, BLACK, (confirm_button_x, confirm_button_y,
+                                         confirm_button_width, confirm_button_height), 2)
+        confirm_button_text = FONT.render("Confirmar", True, WHITE)
+        screen.blit(confirm_button_text, (confirm_button_x + (confirm_button_width - confirm_button_text.get_width()) // 2,
+                                          confirm_button_y + (confirm_button_height - confirm_button_text.get_height()) // 2))
+
+        pygame.display.flip()  # Actualiza la pantalla
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:  # Si se cierra la ventana
-                pygame.quit()  # Cierra Pygame
-                sys.exit()  # Sale del programa
+                pygame.quit()
+                sys.exit()
+
             if event.type == pygame.KEYDOWN:  # Si se presiona una tecla
                 if event.key == pygame.K_RETURN:  # Si se presiona Enter
                     try:
-                        # Intenta convertir el texto ingresado en el formato filas x columnas
                         rows, cols = map(int, user_text.lower().split('x'))
-                        return rows, cols  # Devuelve el número de filas y columnas ingresadas
-                    except:  # Si el formato es incorrecto
-                        user_text = ''  # Borra el texto ingresado para que el usuario intente nuevamente
-                elif event.key == pygame.K_BACKSPACE:  # Si se presiona la tecla de retroceso
-                    user_text = user_text[:-1]  # Borra el último caracter del texto ingresado
-                else:
-                    user_text += event.unicode  # Agrega el carácter ingresado al texto
+                        if 5 <= rows <= 20 and 5 <= cols <= 20:
+                            return rows, cols
+                        else:
+                            error_message = "Tamaño inválido. Dimensiones entre 5x5 y 20x20."
+                    except ValueError:
+                        error_message = "Formato inválido. Use NxM (ejemplo: 10x10)."
+                elif event.key == pygame.K_BACKSPACE:  # Si se presiona retroceso
+                    user_text = user_text[:-1]
+                    error_message = ""
+                else:  # Agregar el texto ingresado
+                    user_text += event.unicode
+
+            if event.type == pygame.MOUSEBUTTONDOWN:  # Detectar clics del mouse
+                if is_hovered_back:  # Si se hace clic en "Volver"
+                    return None
+                if is_hovered_confirm:  # Si se hace clic en "Confirmar"
+                    try:
+                        rows, cols = map(int, user_text.lower().split('x'))
+                        if 5 <= rows <= 20 and 5 <= cols <= 20:
+                            return rows, cols
+                        else:
+                            error_message = "Tamaño inválido. Dimensiones entre 5x5 y 20x20."
+                    except ValueError:
+                        error_message = "Formato inválido. Use NxM (ejemplo: 10x10)."
 
 
 def get_saved_games():
@@ -268,7 +324,6 @@ def show_saved_games(screen):
                     if button_x <= mouse_x <= button_x + button_width and button_y <= mouse_y <= button_y + button_height:
                         return game  # Devuelve el nombre del archivo seleccionado
 
-
 def show_created_games(screen):
     """Muestra una lista de nonogramas creados y permite al usuario seleccionar uno."""
     directory = "nonogramas_creados"
@@ -287,37 +342,67 @@ def show_created_games(screen):
     except ValueError:
         created_games.sort()  # Orden alfabético si hay nombres personalizados
 
-    selected_game = None
-    running = True
-
-    while running:
+    while True:
         screen.fill(WHITE)
 
         # Título
         title_surface = FONT.render("Selecciona un nonograma para jugar:", True, BLACK)
-        screen.blit(title_surface, (screen.get_width() // 2 - title_surface.get_width() // 2, 50))
+        screen.blit(title_surface, (screen.get_width() // 2 - title_surface.get_width() // 2, 20))
 
-        # Obtener la posición del mouse
-        mouse_pos = pygame.mouse.get_pos()
+        # Dibujar los nonogramas creados como botones
+        game_buttons = []
+        if created_games:
+            for i, game in enumerate(created_games[:5]):  # Limitar a las primeras 5 partidas
+                button_x = screen.get_width() // 2 - 150
+                button_y = 100 + i * 50
+                button_width, button_height = 300, 40
 
-        # Calcular posición inicial para centrar verticalmente
-        total_height = len(created_games) * 40
-        start_y = screen.get_height() // 2 - total_height // 2
+                # Detectar si el cursor está sobre el botón
+                mouse_x, mouse_y = pygame.mouse.get_pos()
+                is_hovered = button_x <= mouse_x <= button_x + button_width and button_y <= mouse_y <= button_y + button_height
 
-        # Mostrar la lista de nonogramas
-        for i, game in enumerate(created_games):
-            text_color = BLACK
-            # Detectar si el mouse está sobre una opción
-            text_surface = FONT.render(game, True, text_color)
-            text_x = screen.get_width() // 2 - text_surface.get_width() // 2
-            text_y = start_y + i * 40
+                # Cambiar el color del botón si está siendo "hovered"
+                button_color = (150, 150, 150) if is_hovered else (200, 200, 200)
 
-            # Detectar si el cursor está sobre el texto
-            if pygame.Rect(text_x, text_y, text_surface.get_width(), text_surface.get_height()).collidepoint(mouse_pos):
-                text_color = (150, 150, 150)  # Cambiar el color al pasar el cursor
-                text_surface = FONT.render(game, True, text_color)
+                # Dibujar el botón
+                pygame.draw.rect(screen, button_color, (button_x, button_y, button_width, button_height))
+                pygame.draw.rect(screen, BLACK, (button_x, button_y, button_width, button_height), 2)  # Borde negro
 
-            screen.blit(text_surface, (text_x, text_y))
+                # Renderizar el texto del nonograma
+                game_text = FONT.render(game, True, BLACK)
+                screen.blit(game_text, (button_x + (button_width - game_text.get_width()) // 2,
+                                        button_y + (button_height - game_text.get_height()) // 2))
+
+                # Guardar las coordenadas del botón
+                game_buttons.append((button_x, button_y, button_width, button_height, game))
+        else:
+            empty_surface = FONT.render("No hay nonogramas creados", True, BLACK)
+            screen.blit(empty_surface, (screen.get_width() // 2 - empty_surface.get_width() // 2, 100))
+
+        # Dibujar el botón "Volver" en la esquina superior derecha
+        button_size = 50  # Hacerlo casi cuadrado
+        button_x = screen.get_width() - button_size - 10
+        button_y = 10
+
+        # Detectar si el cursor está sobre el botón "Volver"
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+        is_hovered_back = button_x <= mouse_x <= button_x + button_size and button_y <= mouse_y <= button_y + button_size
+
+        # Cambiar el color del botón si está siendo "hovered"
+        button_color_back = (150, 0, 0) if is_hovered_back else (200, 0, 0)
+
+        # Dibujar el borde negro del botón "Volver"
+        border_thickness = 3
+        pygame.draw.rect(screen, BLACK, (button_x - border_thickness, button_y - border_thickness,
+                                         button_size + 2 * border_thickness, button_size + 2 * border_thickness))
+
+        # Dibujar el botón "Volver" dentro del borde
+        pygame.draw.rect(screen, button_color_back, (button_x, button_y, button_size, button_size))
+
+        # Agregar texto centrado dentro del botón "Volver"
+        button_text = FONT.render("Volver", True, WHITE)
+        screen.blit(button_text, (button_x + (button_size - button_text.get_width()) // 2,
+                                  button_y + (button_size - button_text.get_height()) // 2))
 
         pygame.display.flip()
 
@@ -325,17 +410,16 @@ def show_created_games(screen):
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
-            elif event.type == pygame.MOUSEBUTTONDOWN:
-                if event.button == 1:  # Click izquierdo
-                    for i, game in enumerate(created_games):
-                        text_surface = FONT.render(game, True, BLACK)
-                        text_x = screen.get_width() // 2 - text_surface.get_width() // 2
-                        text_y = start_y + i * 40
-                        if pygame.Rect(text_x, text_y, text_surface.get_width(), text_surface.get_height()).collidepoint(mouse_pos):
-                            selected_game = game
-                            running = False
-                            break
 
-    if selected_game:
-        return selected_game  # Retornar el archivo seleccionado
-    return "menu_principal"  # Si no selecciona nada, regresar al menú principal
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                mouse_x, mouse_y = event.pos
+
+                # Verificar si se hizo clic en el botón "Volver"
+                if is_hovered_back:
+                    return "menu_principal"
+
+                # Verificar si se hizo clic en algún nonograma
+                for button in game_buttons:
+                    button_x, button_y, button_width, button_height, game = button
+                    if button_x <= mouse_x <= button_x + button_width and button_y <= mouse_y <= button_y + button_height:
+                        return game  # Devuelve el nombre del archivo seleccionado

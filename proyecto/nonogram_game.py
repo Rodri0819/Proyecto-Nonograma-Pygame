@@ -212,9 +212,8 @@ class NonogramGame:
                 grid = Grid(rows, cols, self.SQUARE_SIZE, self.TOP_MARGIN, self.LEFT_MARGIN, self.screen)
 
             elif option == "choose_size":
-                result = menu.get_board_size(self.screen, self.WIDTH,
-                                             self.HEIGHT)  # Llama a la función para obtener el tamaño
-                if result is None:  # Si el usuario presionó ESC y no eligió tamaño
+                result = menu.get_board_size(self.screen, self.WIDTH, self.HEIGHT)  # Llama a la función para obtener el tamaño
+                if result is None:  # Si el usuario presionó Volver y no eligió tamaño
                     continue  # Regresar al menú principal
 
                 rows, cols = result  # Desempaquetar las dimensiones
@@ -363,7 +362,7 @@ class NonogramGame:
                     now = datetime.datetime.now()
                     timestamp = now.strftime("%Y%m%d_%H%M%S")
                     screenshot_filename = f"nonograma_ganado_{timestamp}.png"
-                    directory = "partidas-ganadas"
+                    directory = "partidas_ganadas"
                     if not os.path.exists(directory):
                         os.makedirs(directory)
                     filepath = os.path.join(directory, screenshot_filename)
@@ -376,60 +375,6 @@ class NonogramGame:
                     running = False
 
                 pygame.display.flip()
-
-    def ask_board_size(self):
-        """Permite al usuario ingresar el tamaño del tablero en formato NxM."""
-        running = True
-        input_text = ""
-        error_message = ""  # Mensaje de error para mostrar en pantalla
-
-        while running:
-            self.screen.fill(WHITE)
-
-            # Mensajes en pantalla
-            title_surface = FONT.render("Ingrese el tamaño del tablero (ejemplo: 5x5):", True, BLACK)
-            self.screen.blit(title_surface, (self.WIDTH // 2 - title_surface.get_width() // 2, 100))
-
-            # Mostrar el texto ingresado por el usuario
-            input_surface = FONT.render(input_text, True, BLACK)
-            self.screen.blit(input_surface, (self.WIDTH // 2 - input_surface.get_width() // 2, 200))
-
-            # Mostrar mensaje de error si existe
-            if error_message:
-                error_surface = FONT.render(error_message, True, (255, 0, 0))  # Color rojo para errores
-                self.screen.blit(error_surface, (self.WIDTH // 2 - error_surface.get_width() // 2, 300))
-
-            pygame.display.flip()
-
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    sys.exit()
-                elif event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_ESCAPE:  # Si se presiona ESC, regresar al menú principal
-                        return None
-                    elif event.key == pygame.K_RETURN:  # Confirmar entrada con Enter
-                        if "x" in input_text:
-                            parts = input_text.split("x")
-                            if len(parts) == 2 and parts[0].isdigit() and parts[1].isdigit():
-                                rows, cols = map(int, parts)
-                                if 5 <= rows <= 20 and 5 <= cols <= 20:  # Validar límites
-                                    return rows, cols
-                                else:
-                                    error_message = "Tamaño inválido. Elija dimensiones entre 5 y 20."
-                            else:
-                                error_message = "Formato inválido. Use NxM (ejemplo: 10x10)."
-                        else:
-                            error_message = "Formato inválido. Use NxM (ejemplo: 10x10)."
-                        input_text = ""  # Limpiar entrada después de un error
-                    elif event.key == pygame.K_BACKSPACE:  # Borrar último carácter
-                        input_text = input_text[:-1]
-                        error_message = ""  # Limpiar mensaje de error
-                    elif event.unicode.isdigit() or event.unicode == "x":  # Aceptar números y "x"
-                        input_text += event.unicode
-                        error_message = ""  # Limpiar mensaje de error
-
-        return None  # Valor por defecto si se cancela
 
     def ask_nonogram_name(self):
         """Permite al usuario ingresar un nombre para el nonograma."""
@@ -477,8 +422,8 @@ class NonogramGame:
     def create_nonogram(self):
         """Crea un nonograma personalizado permitiendo elegir el tamaño del tablero."""
         # Pedir al usuario el tamaño del tablero
-        result = self.ask_board_size()
-        if result is None:  # Si el usuario presionó ESC, salir del método
+        result = menu.get_board_size(self.screen, self.WIDTH, self.HEIGHT)
+        if result is None:
             return
 
         rows, cols = result  # Desempaquetar las dimensiones

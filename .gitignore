@@ -6,6 +6,11 @@ __pycache__/
 # C extensions
 *.so
 
+# Carpetas que se generan en ejecución
+nonogramas_creados/
+partidas_guardadas/
+partidas_ganadas/
+
 # Distribution / packaging
 .Python
 build/
