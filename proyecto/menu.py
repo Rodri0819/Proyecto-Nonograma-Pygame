@@ -176,6 +176,98 @@ def get_saved_games():
 
     return [f for f in os.listdir(directory) if f.endswith('.pkl')]  # Filtra solo archivos .pkl
 
+def show_saved_games(screen):
+    saved_games = get_saved_games()
+
+    # Ordenar las partidas guardadas del más reciente al más antiguo
+    saved_games.sort(key=lambda x: datetime.datetime.strptime(x, "%Y%m%d_%H%M%S.pkl"), reverse=True)
+
+    while True:
+        screen.fill(WHITE)  # Rellena la pantalla con blanco
+
+        # Renderiza el título
+        title_surface = FONT.render("Partidas Guardadas:", True, BLACK)
+        screen.blit(title_surface, (screen.get_width() // 2 - title_surface.get_width() // 2, 20))
+
+        # Mensaje instruccional
+        instruction_surface = FONT.render("Haz clic en una partida para cargarla", True, BLACK)
+        screen.blit(instruction_surface, (screen.get_width() // 2 - instruction_surface.get_width() // 2, 50))
+
+        # Dibujar las partidas guardadas como botones
+        game_buttons = []
+        if saved_games:
+            for i, game in enumerate(saved_games[:5]):  # Limitar a las primeras 5 partidas
+                button_x = screen.get_width() // 2 - 150
+                button_y = 100 + i * 50
+                button_width, button_height = 300, 40
+
+                # Detectar si el cursor está sobre el botón
+                mouse_x, mouse_y = pygame.mouse.get_pos()
+                is_hovered = button_x <= mouse_x <= button_x + button_width and button_y <= mouse_y <= button_y + button_height
+
+                # Cambiar el color del botón si está siendo "hovered"
+                button_color = (150, 150, 150) if is_hovered else (200, 200, 200)
+
+                # Dibujar el botón
+                pygame.draw.rect(screen, button_color, (button_x, button_y, button_width, button_height))
+                pygame.draw.rect(screen, BLACK, (button_x, button_y, button_width, button_height), 2)  # Borde negro
+
+                # Renderizar el texto de la partida
+                game_text = FONT.render(game, True, BLACK)
+                screen.blit(game_text, (button_x + (button_width - game_text.get_width()) // 2,
+                                        button_y + (button_height - game_text.get_height()) // 2))
+
+                # Guardar las coordenadas del botón
+                game_buttons.append((button_x, button_y, button_width, button_height, game))
+        else:
+            empty_surface = FONT.render("No hay partidas guardadas", True, BLACK)
+            screen.blit(empty_surface, (screen.get_width() // 2 - empty_surface.get_width() // 2, 100))
+
+        # Dibujar el botón "Volver" en la esquina superior derecha
+        button_size = 50  # Hacerlo casi cuadrado
+        button_x = screen.get_width() - button_size - 10
+        button_y = 10
+
+        # Detectar si el cursor está sobre el botón "Volver"
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+        is_hovered_back = button_x <= mouse_x <= button_x + button_size and button_y <= mouse_y <= button_y + button_size
+
+        # Cambiar el color del botón si está siendo "hovered"
+        button_color_back = (150, 0, 0) if is_hovered_back else (200, 0, 0)
+
+        # Dibujar el borde negro del botón "Volver"
+        border_thickness = 3
+        pygame.draw.rect(screen, BLACK, (button_x - border_thickness, button_y - border_thickness,
+                                         button_size + 2 * border_thickness, button_size + 2 * border_thickness))
+
+        # Dibujar el botón "Volver" dentro del borde
+        pygame.draw.rect(screen, button_color_back, (button_x, button_y, button_size, button_size))
+
+        # Agregar texto centrado dentro del botón "Volver"
+        button_text = FONT.render("Volver", True, WHITE)
+        screen.blit(button_text, (button_x + (button_size - button_text.get_width()) // 2,
+                                  button_y + (button_size - button_text.get_height()) // 2))
+
+        pygame.display.flip()  # Actualiza la pantalla
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                mouse_x, mouse_y = event.pos
+
+                # Verificar si se hizo clic en el botón "Volver"
+                if is_hovered_back:
+                    return "menu_principal"
+
+                # Verificar si se hizo clic en alguna partida
+                for button in game_buttons:
+                    button_x, button_y, button_width, button_height, game = button
+                    if button_x <= mouse_x <= button_x + button_width and button_y <= mouse_y <= button_y + button_height:
+                        return game  # Devuelve el nombre del archivo seleccionado
+
 
 def show_created_games(screen):
     """Muestra una lista de nonogramas creados y permite al usuario seleccionar uno."""
