@@ -315,10 +315,13 @@ class NonogramGame:
                                 continue
                             elif selected_option == 1:  # Guardar partida
                                 self.save_game(grid.get_grid(), rows, cols, elapsed_time, solution, cantidadPistas)
+                                continue
                             elif selected_option == 2:  # Reiniciar
                                 start_time = pygame.time.get_ticks()  # Reinicia el tiempo
                                 paused_time = 0  # Reinicia el tiempo pausado
+                                cantidadPistas = 0
                                 grid.reset()
+                                continue
                             elif selected_option == 3:  # Salir
                                 running = False
                                 break
@@ -352,18 +355,18 @@ class NonogramGame:
                 # Verificar si el jugador gana
                 if not grid.win and utils.check_win(grid.get_grid(), solution, rows, cols):
                     #Calcula el puntaje de la partida
-                    puntajeBase = rows+cols
                     cantidadCeldasMarcadas = utils.contar_celdas_marcadas(solution) 
-                    puntajeTiempo = puntajeBase - (elapsed_time // 6000)
+                    puntajeBase = rows*cols/((rows+cols)*cantidadCeldasMarcadas)
+                    puntajeTiempo = (rows+cols) - (elapsed_time // 6000)
                     puntajePistas = 0
                     if cantidadPistas > 0:
                         if puntajeTiempo < 0:
                             puntajePistas = (-puntajeTiempo + cantidadPistas)*(cantidadPistas/cantidadCeldasMarcadas)
                         elif puntajeTiempo > 0 :
-                            puntajePistas = (puntajeTiempo + cantidadPistas)*(cantidadPistas/cantidadCeldasMarcadas)
+                            puntajePistas = (puntajeTiempo + cantidadPistas)*(cantidadPistas/cantidadCeldasMarcadas)*(1.3)
 
                     if cantidadPistas < cantidadCeldasMarcadas :
-                        puntajeTotal = puntajeBase + puntajeTiempo - puntajePistas
+                        puntajeTotal = round(puntajeBase + puntajeTiempo - puntajePistas)
                     else :
                         puntajeTotal = 0     
 
@@ -393,7 +396,7 @@ class NonogramGame:
                     pygame.image.save(screenshot_surface, filepath)
                     grid.display_win_message(self.WIDTH, self.HEIGHT)
                     pygame.display.flip()
-                    pygame.time.delay(5000)
+                    pygame.time.delay(3000)
                     running = False
 
     def ask_nonogram_name(self):
