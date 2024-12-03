@@ -356,7 +356,7 @@ class NonogramGame:
                 if not grid.win and utils.check_win(grid.get_grid(), solution, rows, cols):
                     #Calcula el puntaje de la partida
                     cantidadCeldasMarcadas = utils.contar_celdas_marcadas(solution) 
-                    puntajeBase = rows*cols/((rows+cols)*cantidadCeldasMarcadas)
+                    puntajeBase = (rows*cols)/(rows+cols+cantidadCeldasMarcadas)
                     puntajeTiempo = (rows+cols) - (elapsed_time // 6000)
                     puntajePistas = 0
                     if cantidadPistas > 0:
