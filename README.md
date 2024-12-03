@@ -68,13 +68,13 @@ Puedes modificar las constantes en `constants.py` para cambiar aspectos visuales
 
 Fotos:
 
-![image](photos_readme\Screenshot 2024-12-03 162300.png)
+![image](https://github.com/Rodri0819/Proyecto-Nonograma-Pygame/blob/1975f4d57d7c4ef2b4ef44419b7ca287881ff133/photos_readme/Screenshot%202024-12-03%20162300.png)
 
-![image](photos_readme\Screenshot 2024-12-03 162819.png)
+![image](https://github.com/Rodri0819/Proyecto-Nonograma-Pygame/blob/1975f4d57d7c4ef2b4ef44419b7ca287881ff133/photos_readme/Screenshot%202024-12-03%20162819.png)
 
-![image](photos_readme\Screenshot 2024-12-03 162836.png)
+![image](https://github.com/Rodri0819/Proyecto-Nonograma-Pygame/blob/1975f4d57d7c4ef2b4ef44419b7ca287881ff133/photos_readme/Screenshot%202024-12-03%20162836.png)
 
-![image](photos_readme\Screenshot 2024-12-03 162829.png)
+![image](https://github.com/Rodri0819/Proyecto-Nonograma-Pygame/blob/1975f4d57d7c4ef2b4ef44419b7ca287881ff133/photos_readme/Screenshot%202024-12-03%20162829.png)
 
 ### Autores
 <p align="left">
